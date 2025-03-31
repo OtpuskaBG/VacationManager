@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VacationManager.Core.Authentication.Abstractions;
 
-namespace VacationManager.Core.Authentication.Extentions;
+namespace VacationManager.Core.Authentication.Extensions;
 
 public static class AuthenticationContextExtensions
 {

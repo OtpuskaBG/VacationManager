@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VacationManager.Data.Models.Abstractions;
 using VacationManager.Data.Repositories.Abstractions;
-using VacationManager.Data.Repositories.Extentions;
+using VacationManager.Data.Repositories.Extensions;
 using VacationManager.Data.Sorting.Abstractions;
 
 

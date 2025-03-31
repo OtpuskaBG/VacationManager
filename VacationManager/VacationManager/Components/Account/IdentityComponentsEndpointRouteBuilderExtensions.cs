@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using VacationManager.Components.Account.Pages;
 using VacationManager.Components.Account.Pages.Manage;
-using VacationManager.Data;
+using VacationManager.Data.Models;
 
 namespace Microsoft.AspNetCore.Routing;
 

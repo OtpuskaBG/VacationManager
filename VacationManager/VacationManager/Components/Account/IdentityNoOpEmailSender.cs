@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using VacationManager.Data;
+using VacationManager.Data.Models;
 
 namespace VacationManager.Components.Account;
 

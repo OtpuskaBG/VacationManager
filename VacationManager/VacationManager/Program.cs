@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using VacationManager.Components;
 using VacationManager.Components.Account;
 using VacationManager.Data;
+using VacationManager.Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
