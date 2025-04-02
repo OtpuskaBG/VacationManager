@@ -16,9 +16,9 @@ public class LeaveRequestConfiguration : IEntityTypeConfiguration<LeaveRequest>
     {
         builder.ConfigureEntity();
 
-        builder.HasOne(l => l.Requester)
+        builder.HasOne(l => l.User)
                .WithMany(u => u.LeaveRequests)
-               .HasForeignKey(l => l.RequesterId)
+               .HasForeignKey(l => l.UserId)
                .OnDelete(DeleteBehavior.Cascade);
     }
 }

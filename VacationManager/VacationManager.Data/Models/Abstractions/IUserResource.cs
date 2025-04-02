@@ -10,5 +10,5 @@ namespace VacationManager.Data.Models.Abstractions;
 public interface IUserResource
 {
     string UserId { get; set; }
-    IdentityUser? User { get; set; }
+    ApplicationUser User { get; set; }
 }

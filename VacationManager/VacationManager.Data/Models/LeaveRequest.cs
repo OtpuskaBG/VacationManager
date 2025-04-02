@@ -17,8 +17,8 @@ public class LeaveRequest : BaseEntity, IUserResource
     public bool HalfDay { get; set; }
     public bool Approved { get; set; }
 
-    public string RequesterId { get; set; }
-    public ApplicationUser Requester { get; set; }
+    //public string RequesterId { get; set; }
+    //public ApplicationUser Requester { get; set; }
 
 
     public LeaveType Type { get; set; }
@@ -28,6 +28,6 @@ public class LeaveRequest : BaseEntity, IUserResource
 
 
 
-    public string UserId { get; set; } = string.Empty;
-    public IdentityUser? User { get; set; }
+    public string? UserId { get; set; } = string.Empty;
+    public ApplicationUser? User { get; set; }
 }

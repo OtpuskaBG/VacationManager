@@ -398,3 +398,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/VacationManager/.idea/.idea.VacationManager/.idea
