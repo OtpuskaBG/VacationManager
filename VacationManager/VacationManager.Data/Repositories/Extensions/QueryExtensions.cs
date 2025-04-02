@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VacationManager.Data.Sorting.Abstractions;
 
-namespace VacationManager.Data.Repositories.Extentions
+namespace VacationManager.Data.Repositories.Extensions
 {
     public static class QueryExtensions
     {

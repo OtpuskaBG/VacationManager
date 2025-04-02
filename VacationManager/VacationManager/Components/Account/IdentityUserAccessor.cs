@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using VacationManager.Data;
+using VacationManager.Data.Models;
 
 namespace VacationManager.Components.Account;
 
