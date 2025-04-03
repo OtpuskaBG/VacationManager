@@ -10,8 +10,4 @@
     <ProjectReference Include="..\VacationManager.Data\VacationManager.Data.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Prototypes\" />
-  </ItemGroup>
-
 </Project>
