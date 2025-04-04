@@ -7,7 +7,7 @@ using VacationManager.Data.Models;
 
 namespace VacationManager.Core.Prototypes
 {
-    class ProjectPrototype
+    public class ProjectPrototype
     {
         public required string Name { get; init; }
         public required string Description { get; init; }
