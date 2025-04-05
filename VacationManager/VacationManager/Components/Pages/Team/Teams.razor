@@ -1,0 +1,96 @@
+﻿@page "/teams"
+@rendermode RenderMode.InteractiveServer
+
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Models
+
+@inject ITeamService teamService
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<h2 class="text-3xl font-bold text-center mb-4">Available Teams</h2>
+
+@if (teams == null)
+{
+    <p class="text-center text-gray-500">Loading teams...</p>
+}
+else if (teams.Count == 0)
+{
+    <p class="text-center text-gray-500">No teams available.</p>
+}
+else
+{
+    <MudGrid Spacing="6" Justify="Justify.Center">
+        @foreach (var team in teams)
+        {
+            <MudItem>
+                <MudPaper Class="d-flex flex-column align-center py-6 px-4"
+                          Style="border: 5px solid transparent; border-image: linear-gradient(to right, #3da4dc, var(--mainColor)) 1;"
+                          Height="220px" Width="370px">
+
+                    <MudText Typo="Typo.h4" Class="text-center">@team.Name</MudText>
+
+                    <div class="d-flex justify-between mt-4" style="width: 100%;">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   @onclick="async () => await OpenTeam(team.Id)">
+                            View Team
+                        </MudButton>
+
+                        <AuthorizeView Roles="CEO">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Warning"
+                                       @onclick="async () => await EditTeam(team.Id)">
+                                Edit
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Error"
+                                       @onclick="async () => await DeleteTeam(team.Id)">
+                                Delete
+                            </MudButton>
+                        </AuthorizeView>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private List<Team> teams;
+
+    CancellationToken cancellationToken;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await teamService.GetAllAsync(CancellationToken.None);
+        teams = result.ToList();
+    }
+
+    private async Task OpenTeam(Guid teamId)
+    {
+        NavManager.NavigateTo($"/teams/{teamId}");
+    }
+
+    private async Task EditTeam(Guid teamId)
+    {
+        NavManager.NavigateTo($"/teams/{teamId}/edit");
+    }
+
+    private async Task DeleteTeam(Guid teamId)
+    {
+        bool confirmDelete = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this team?");
+        if (!confirmDelete) return;
+
+        try
+        {
+            await teamService.DeleteAsync(teamId, CancellationToken.None);
+            teams = teams.Where(t => t.Id != teamId).ToList(); // Remove from UI
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting team: {ex.Message}");
+        }
+    }
+}

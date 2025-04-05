@@ -1,0 +1,74 @@
+﻿@page "/teams/edit/{TeamId:guid}"
+@inject ITeamService teamService
+@inject IProjectService projectService
+@inject IAuthenticationContext authContext
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Models
+@using VacationManager.Data.Enums
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Core.Prototypes
+
+<AuthorizeView Roles="CEO">
+    <EditForm Model="team" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <MudTextField Label="Team Name" @bind-Value="team.Name" Class="mt-2" />
+
+        <MudSelect T="Guid" Label="Project" @bind-Value="team.ProjectId" Class="mt-2">
+            <MudSelectItem T="Guid" Value="">-- Select Project --</MudSelectItem>
+            @foreach (var project in projects)
+            {
+                <MudSelectItem T="Guid" Value="@project.Id">@project.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudSelect T="Guid" Label="Team Leader" @bind-Value="team.UserId" Class="mt-2">
+            <MudSelectItem T="Guid" Value="">-- Select Team Leader --</MudSelectItem>
+            @foreach (var user in users)
+            {
+                <MudSelectItem T="Guid" Value="@user.Id">@user.UserName</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudSelect T="Guid" Label="Developers" @bind-Value="team.Developers" Class="mt-2" MultiSelection="true">
+            @foreach (var user in users)
+            {
+                <MudSelectItem T="Guid" Value="@user.Id">@user.UserName</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudButton Type="submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">Save</MudButton>
+    </EditForm>
+</AuthorizeView>
+
+@code {
+    [Parameter] public Guid TeamId { get; set; }
+    private Team team = new();
+    private List<Project> projects = new(); // Get this from a service or context
+    private List<ApplicationUser> users = new(); // Get this from a service or context
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load projects and users from the appropriate services
+        projects = await projectService.GetAllAsync(CancellationToken.None);
+        users = await authContext.GetAllUsersAsync(CancellationToken.None);
+
+        // Fetch the existing team using the TeamId parameter
+        team = await teamService.GetByIdAsync(TeamId, CancellationToken.None);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            // Update the team using the TeamService
+            await teamService.UpdateAsync(team, CancellationToken.None);
+            // Redirect or notify on success
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+        }
+    }
+}

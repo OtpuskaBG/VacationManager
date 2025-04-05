@@ -1,0 +1,110 @@
+﻿@page "/teams/{teamId:guid}"
+@rendermode RenderMode.InteractiveServer
+
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Models
+@using VacationManager.Data.Enums
+@using VacationManager.Core.Prototypes
+
+@inject ITeamService teamService
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<h2 class="text-3xl font-bold text-center mb-4">Team Details</h2>
+
+@if (isLoading)
+{
+    <p class="text-center text-gray-500">Loading team details...</p>
+}
+else if (team == null)
+{
+    <p class="text-center text-red-500">Team not found.</p>
+}
+else
+{
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+        <h3 class="text-2xl font-semibold text-gray-900">@team.Name</h3>
+        <p class="text-gray-600 mt-2"><strong>Project:</strong> @team.Project?.Name</p>
+        <p class="text-gray-600 mt-2"><strong>Team Leader:</strong> @team.User?.UserName</p>
+        
+        <h4 class="mt-4 font-semibold text-lg">Developers:</h4>
+        <ul class="list-disc list-inside text-gray-700">
+            @foreach (var developer in team.Developers)
+            {
+                <li>@developer.UserName</li>
+            }
+        </ul>
+
+        <div class="mt-6">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       @onclick="async () => await GoBack()">
+                ← Back to Teams
+            </MudButton>
+        </div>
+
+        <AuthorizeView Roles="CEO">
+            <div class="mt-4">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Warning"
+                           @onclick="async () => await EditTeam()">
+                    Edit Team
+                </MudButton>
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Error"
+                           @onclick="async () => await DeleteTeam()">
+                    Delete Team
+                </MudButton>
+            </div>
+        </AuthorizeView>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid teamId { get; set; }
+    private Team? team;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            team = await teamService.GetByIdAsync(teamId, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching team details: {ex.Message}");
+            team = null;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task GoBack()
+    {
+        NavManager.NavigateTo("/teams");
+    }
+
+    private async Task EditTeam()
+    {
+        NavManager.NavigateTo($"/teams/{teamId}/edit");
+    }
+
+    private async Task DeleteTeam()
+    {
+        bool confirmDelete = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this team?");
+        if (!confirmDelete) return;
+
+        try
+        {
+            await teamService.DeleteAsync(teamId, CancellationToken.None);
+            NavManager.NavigateTo("/teams"); // Go back to the teams list
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting team: {ex.Message}");
+        }
+    }
+}
