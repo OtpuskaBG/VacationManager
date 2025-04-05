@@ -8,7 +8,7 @@ using VacationManager.Data.Models;
 
 namespace VacationManager.Core.Prototypes
 {
-    class UserPrototype
+    public class UserPrototype
     {
         public Guid? TeamId { get; init; }
         public Team? Team { get; init; }

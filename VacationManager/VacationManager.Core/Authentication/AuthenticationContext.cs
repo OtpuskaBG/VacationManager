@@ -5,15 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VacationManager.Core.Authentication.Abstractions;
+using VacationManager.Data.Models;
 
 namespace VacationManager.Core.Authentication;
 
 public class AuthenticationContext : IAuthenticationContext
 {
     public bool IsAuthenticated => this.CurrentUser != null;
-    public IdentityUser? CurrentUser { get; private set; }
+    public ApplicationUser? CurrentUser { get; private set; }
 
-    public void Authenticate(IdentityUser user)
+    public void Authenticate(ApplicationUser user)
     {
         ArgumentNullException.ThrowIfNull(user);
         this.CurrentUser = user;
