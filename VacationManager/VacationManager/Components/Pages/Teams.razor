@@ -1,0 +1,51 @@
+﻿@page "/teams"
+@using Microsoft.AspNetCore.Components.Authorization
+@using VacationManager.Data.Models
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject ITeamService TeamService
+
+<h3>Екипи</h3>
+
+<AuthorizeView Roles="CEO">
+    <Authorized>
+        <button class="btn btn-primary" @onclick="GoToCreateTeam">Създай Екип</button>
+    </Authorized>
+</AuthorizeView>
+
+@if (teams == null)
+{
+    <p><em>Зареждане...</em></p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var team in teams)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                @team.Name
+                <button class="btn btn-info" @onclick="() => ShowTeamInfo(team.Id)">Инфо</button>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Team> teams;
+
+    protected override async Task OnInitializedAsync()
+    {
+        teams = await TeamService.GetAllTeamsAsync();
+    }
+
+    private void GoToCreateTeam()
+    {
+        Navigation.NavigateTo("/teams/create");
+    }
+
+    // Променяме от int на Guid
+    private void ShowTeamInfo(Guid teamId)
+    {
+        Navigation.NavigateTo($"/teams/details/{teamId}");
+    }
+}

@@ -1,0 +1,47 @@
+﻿@page "/teams/create"
+@inject ITeamService TeamService
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@using VacationManager.Data.Models
+
+
+<h3>Създай нов екип</h3>
+
+<EditForm Model="teamModel" OnValidSubmit="HandleValidSubmit" FormName="createTeamForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Име на екипа</label>
+        <InputText class="form-control" @bind-Value="teamModel.Name" />
+        <ValidationMessage For="@(() => teamModel.Name)" />
+    </div>
+
+    <button type="submit" class="btn btn-success">Създай</button>
+</EditForm>
+
+@code {
+    private TeamModel teamModel = new();
+
+    private async Task HandleValidSubmit()
+    {
+        // Добави проверка дали името на екипа е празно или съдържа само интервали
+        if (string.IsNullOrWhiteSpace(teamModel.Name))
+        {
+            // Ако името на екипа е празно, можеш да покажеш съобщение за грешка
+            Console.WriteLine("Моля, въведете валидно име за екипа.");
+            return; // Прекратява изпълнението на кода и не изпраща формата
+        }
+
+        // Ако името е валидно, продължаваме със създаването на екипа
+        var newTeam = new Team
+            {
+                Name = teamModel.Name
+            };
+
+        await TeamService.CreateTeamAsync(newTeam);
+        Nav.NavigateTo("/teams");
+    }
+}

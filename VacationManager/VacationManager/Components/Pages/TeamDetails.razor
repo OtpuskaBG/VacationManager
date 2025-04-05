@@ -1,0 +1,35 @@
+﻿@page "/teams/details/{TeamId:guid}"   
+@inject ITeamService TeamService
+@using VacationManager.Data.Models
+
+<h3>Информация за екип</h3>
+
+@if (team == null)
+{
+    <p><em>Зареждане...</em></p>
+}
+else
+{
+    <p><strong>Име:</strong> @team.Name</p>
+    <p><strong>Проект:</strong> @team.Project?.Name</p>
+    <p><strong>Разработчици:</strong></p>
+
+    <ul>
+        @foreach (var dev in team.Developers)
+        {
+            <li>@dev.UserName</li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter]
+    public Guid TeamId { get; set; }   <!-- Променяме на Guid -->
+
+    private Team? team;
+
+    protected override async Task OnInitializedAsync()
+    {
+        team = await TeamService.GetTeamByIdAsync(TeamId);   <!-- Променяме на Guid -->
+    }
+}
