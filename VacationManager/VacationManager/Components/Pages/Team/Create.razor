@@ -1,6 +1,7 @@
 ﻿@page "/teams/create"
 
 @using AutoMapper
+@using Microsoft.AspNetCore.Authorization
 @using VacationManager.Models.Team
 @using VacationManager.Core.Authentication.Abstractions
 @using VacationManager.Core.Prototypes
@@ -15,9 +16,11 @@
 @inject IMapper mapper
 @inject IUserService userService
 
-@if (authContext.IsAuthenticated && authContext.CurrentUser?.Role == Role.CEO)
-{
-    <EditForm Model="Team" OnValidSubmit="CreateTeam" FormName="CreateForm">
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+<EditForm Model="Team" OnValidSubmit="CreateTeam" FormName="CreateForm">
         <ChildContent Context="teamContext">
             <DataAnnotationsValidator />
             <ValidationSummary />
@@ -37,7 +40,7 @@
                         type="checkbox"
                         id="dev_@user.Id"
                         value="@user.Id"
-                        checked="@selectedUser.Contains(user)"
+                        checked="@selectedUsers.Contains(user)"
                         @onchange="(e) => OnDeveloperChange(user, (bool)e.Value)" />
                         <label class="form-check-label" for="dev_@user.Id">@user.FirstName @user.LastName</label>
                     </div>
@@ -46,9 +49,9 @@
 
             <div class="mb-3">
                 <label for="teamLeader" class="form-label">Choose Team Leader:</label>
-                <InputSelect @bind-Value="Team.TeamLead" id="teamLeader" class="form-select">
+                <InputSelect @bind-Value="Team.TeamLeadId" id="teamLeader" class="form-select">
                     <option value="">-- Select Team Leader --</option>
-                    @foreach (var developer in unassignedUsers)
+                    @foreach (var developer in selectedUsers)
                     {
                         <option value="@developer.Id">@developer.FirstName @developer.LastName</option>
                     }
@@ -58,11 +61,7 @@
             <button type="submit" class="btn btn-primary mt-4">Create Team</button>
         </ChildContent>
     </EditForm>
-}
-else
-{
-    <p class="text-danger">You do not have permission to access this page.</p>
-}
+
 
 @code {
     [SupplyParameterFromForm(FormName = "TeamForm")]
@@ -73,11 +72,10 @@ else
 
     private Project[] projects = [];
     private ApplicationUser[] unassignedUsers = [];
-    private List<ApplicationUser> selectedUser = new();
+    private List<ApplicationUser> selectedUsers = new();
     private bool isChecked;
 
     CancellationToken cancellationToken = new();
-
     protected override async Task OnInitializedAsync()
     {
         var allUsers = await userService.GetAllAsync(cancellationToken);
@@ -90,7 +88,7 @@ else
                 var teamLeader = unassignedUsers.FirstOrDefault(u => u.Id == Team.TeamLead.Id);
                 if (teamLeader != null)
                 {
-                    selectedUser.Add(teamLeader);
+                    selectedUsers.Add(teamLeader);
                     unassignedUsers = unassignedUsers.Where(u => u.Id != Team.TeamLead.Id).ToArray();
                 }
             }
@@ -99,15 +97,15 @@ else
     {
         if (isChecked)
         {
-            if (!selectedUser.Contains(user))
+            if (!selectedUsers.Contains(user))
             {
-                selectedUser.Add(user);
+                selectedUsers.Add(user);
             }
             Console.WriteLine("added");
         }
         else
         {
-            selectedUser.Remove(user);
+            selectedUsers.Remove(user);
             Console.WriteLine("removed");
         }
         
@@ -120,16 +118,16 @@ else
         
 
         // Set the roles for all selected users to Developer
-        foreach (var user in selectedUser)
+        foreach (var user in selectedUsers)
         {
-            if (user.Id != Team.TeamLead.Id)
+            if (user.Id != Team.TeamLeadId)
             {
                 await userService.ChangeRoleAsync(user, Role.Developer, cancellationToken);
             }
         }
 
         // Set the team leader role
-        var teamLeader = selectedUser.FirstOrDefault(u => u.Id == Team.TeamLead.Id);
+        var teamLeader = unassignedUsers.FirstOrDefault(u => u.Id == Team.TeamLeadId);
         if (teamLeader != null)
         {
             await userService.ChangeRoleAsync(teamLeader, Role.TeamLead, cancellationToken);

@@ -29,16 +29,7 @@ public class UserService(IIdentityRepository<ApplicationUser> userRepository, IA
 
     public async Task ChangeRoleAsync(ApplicationUser user, Role newRole, CancellationToken cancellationToken = default)
     {
-        var currentUser = _authContext.CurrentUser;
-
-        if (currentUser is null || currentUser.Role != Role.CEO)
-            throw new UnauthorizedAccessException("Only CEO can change roles.");
-
-        var userId = await GetByIdAsync(user.Id, cancellationToken);
-        if (userId is null)
-            throw new Exception("User not found");
-
-        userId.Role = newRole;
-        await _userRepository.UpdateAsync(userId, cancellationToken);
+        user.Role = newRole;
+        await _userRepository.UpdateAsync(user, cancellationToken);
     }
 }

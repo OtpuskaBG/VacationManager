@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
@@ -23,7 +24,10 @@ using VacationManager.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents();
+//builder.Services.AddRazorComponents();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -62,6 +66,14 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireCEORole", policy =>
+        policy.Requirements.Add(new HasRoleRequirement(Role.CEO)));
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, HasRoleHandler>();
+
 var app = builder.Build();
 
 
@@ -88,7 +100,7 @@ app.UseAuthorization();
 app.UseMiddleware<AuthenticationContextSetupMiddleware>();
 app.UseAntiforgery();
 
-app.MapRazorComponents<App>();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();

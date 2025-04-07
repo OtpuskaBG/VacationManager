@@ -8,8 +8,8 @@ namespace VacationManager.Data.Enums;
 
 public enum Role
 {
-    CEO,
-    Developer,
-    TeamLead,
-    Unassigned
+    CEO = 0,
+    Developer = 1,
+    TeamLead = 2,
+    Unassigned = 3
 }
