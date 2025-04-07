@@ -3,6 +3,7 @@
 @using AutoMapper
 @using Microsoft.AspNetCore.Authorization
 @using VacationManager.Models.Team
+@using Microsoft.AspNetCore.Identity;
 @using VacationManager.Core.Authentication.Abstractions
 @using VacationManager.Core.Prototypes
 @using VacationManager.Core.Services.Abstractions
@@ -15,6 +16,8 @@
 @inject NavigationManager NavManager
 @inject IMapper mapper
 @inject IUserService userService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserManager<ApplicationUser> UserManager
 
 @rendermode RenderMode.InteractiveServer
 
@@ -115,6 +118,17 @@
 
     private async Task CreateTeam()
     {
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+                Console.WriteLine($"✅ User set: {user.UserName}, Role: {user.Role}");
+            }
+        }
         
 
         // Set the roles for all selected users to Developer
@@ -127,7 +141,7 @@
         }
 
         // Set the team leader role
-        var teamLeader = unassignedUsers.FirstOrDefault(u => u.Id == Team.TeamLeadId);
+        var teamLeader = selectedUsers.FirstOrDefault(u => u.Id == Team.TeamLeadId);
         if (teamLeader != null)
         {
             await userService.ChangeRoleAsync(teamLeader, Role.TeamLead, cancellationToken);

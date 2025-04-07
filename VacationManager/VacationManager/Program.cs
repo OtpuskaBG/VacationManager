@@ -91,13 +91,13 @@ else
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
+app.UseMiddleware<AuthenticationContextSetupMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseMiddleware<AuthenticationContextSetupMiddleware>();
+
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
