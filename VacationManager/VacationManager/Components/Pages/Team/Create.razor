@@ -1,72 +1,146 @@
 ﻿@page "/teams/create"
+
+@using AutoMapper
+@using VacationManager.Models.Team
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Core.Prototypes
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Enums
+@using VacationManager.Data.Models
+
 @inject ITeamService teamService
 @inject IProjectService projectService
 @inject IAuthenticationContext authContext
-@using VacationManager.Core.Services.Abstractions
-@using VacationManager.Data.Models
-@using VacationManager.Data.Enums
-@using VacationManager.Core.Authentication.Abstractions
-@using VacationManager.Core.Prototypes
+@inject NavigationManager NavManager
+@inject IMapper mapper
+@inject IUserService userService
 
-<AuthorizeView Roles="CEO">
-    <EditForm Model="team" OnValidSubmit="HandleValidSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+@if (authContext.IsAuthenticated && authContext.CurrentUser?.Role == Role.CEO)
+{
+    <EditForm Model="Team" OnValidSubmit="CreateTeam" FormName="CreateForm">
+        <ChildContent Context="teamContext">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <MudTextField Label="Team Name" @bind-Value="team.Name" Class="mt-2" />
+            <div>
+                <label>Name:</label>
+                <InputText @bind-Value="Team.Name" class="form-control" />
+                <ValidationMessage For="@(() => Team.Name)" />
+            </div>
 
-        <MudSelect T="Guid" Label="Project" @bind-Value="team.ProjectId" Class="mt-2">
-            <MudSelectItem T="Guid" Value="">-- Select Project --</MudSelectItem>
-            @foreach (var project in projects)
-            {
-                <MudSelectItem T="Guid" Value="@project.Id">@project.Name</MudSelectItem>
-            }
-        </MudSelect>
+            <div class="mb-3">
+                <label class="form-label">Choose Developers:</label>
+                @foreach (var user in unassignedUsers)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input"
+                        type="checkbox"
+                        id="dev_@user.Id"
+                        value="@user.Id"
+                        checked="@selectedUser.Contains(user)"
+                        @onchange="(e) => OnDeveloperChange(user, (bool)e.Value)" />
+                        <label class="form-check-label" for="dev_@user.Id">@user.FirstName @user.LastName</label>
+                    </div>
+                }
+            </div>
 
-        <MudSelect T="Guid" Label="Team Leader" @bind-Value="team.UserId" Class="mt-2">
-            <MudSelectItem T="Guid" Value="">-- Select Team Leader --</MudSelectItem>
-            @foreach (var user in users)
-            {
-                <MudSelectItem T="Guid" Value="@user.Id">@user.UserName</MudSelectItem>
-            }
-        </MudSelect>
+            <div class="mb-3">
+                <label for="teamLeader" class="form-label">Choose Team Leader:</label>
+                <InputSelect @bind-Value="Team.TeamLead" id="teamLeader" class="form-select">
+                    <option value="">-- Select Team Leader --</option>
+                    @foreach (var developer in unassignedUsers)
+                    {
+                        <option value="@developer.Id">@developer.FirstName @developer.LastName</option>
+                    }
+                </InputSelect>
+            </div>
 
-        <MudSelect T="Guid" Label="Developers" @bind-Value="team.Developers" Class="mt-2" MultiSelection="true">
-            @foreach (var user in users)
-            {
-                <MudSelectItem T="Guid" Value="@user.Id">@user.UserName</MudSelectItem>
-            }
-        </MudSelect>
-
-        <MudButton Type="submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">Save</MudButton>
+            <button type="submit" class="btn btn-primary mt-4">Create Team</button>
+        </ChildContent>
     </EditForm>
-</AuthorizeView>
+}
+else
+{
+    <p class="text-danger">You do not have permission to access this page.</p>
+}
 
 @code {
-    private Team team = new();
-    private List<Project> projects = new(); // Get this from a service or context
-    private List<ApplicationUser> users = new(); // Get this from a service or context
+    [SupplyParameterFromForm(FormName = "TeamForm")]
+    private TeamViewModel Team { get; set; } = new();
+
+    [Parameter]
+    public bool IsChecked { get; set; }
+
+    private Project[] projects = [];
+    private ApplicationUser[] unassignedUsers = [];
+    private List<ApplicationUser> selectedUser = new();
+    private bool isChecked;
 
     CancellationToken cancellationToken = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Load projects and users from the appropriate services
-        projects = await projectService.GetAllAsync(cancellationToken);
-        users = await authContext.GetAllUsersAsync(cancellationToken);
+        var allUsers = await userService.GetAllAsync(cancellationToken);
+        unassignedUsers = allUsers.Where(u => u.Role == Role.Unassigned).ToArray();
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+            if (Team.TeamLead != null)
+            {
+                var teamLeader = unassignedUsers.FirstOrDefault(u => u.Id == Team.TeamLead.Id);
+                if (teamLeader != null)
+                {
+                    selectedUser.Add(teamLeader);
+                    unassignedUsers = unassignedUsers.Where(u => u.Id != Team.TeamLead.Id).ToArray();
+                }
+            }
+    }
+    private void OnDeveloperChange(ApplicationUser user, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!selectedUser.Contains(user))
+            {
+                selectedUser.Add(user);
+            }
+            Console.WriteLine("added");
+        }
+        else
+        {
+            selectedUser.Remove(user);
+            Console.WriteLine("removed");
+        }
+        
+        StateHasChanged();
+
     }
 
-    private async Task HandleValidSubmit()
+    private async Task CreateTeam()
     {
-        try
+        
+
+        // Set the roles for all selected users to Developer
+        foreach (var user in selectedUser)
         {
-            // Create the team using the TeamService
-            await teamService.CreateAsync(team, cancellationToken);
-            // Redirect or notify on success
+            if (user.Id != Team.TeamLead.Id)
+            {
+                await userService.ChangeRoleAsync(user, Role.Developer, cancellationToken);
+            }
         }
-        catch (Exception ex)
+
+        // Set the team leader role
+        var teamLeader = selectedUser.FirstOrDefault(u => u.Id == Team.TeamLead.Id);
+        if (teamLeader != null)
         {
-            // Handle error
+            await userService.ChangeRoleAsync(teamLeader, Role.TeamLead, cancellationToken);
         }
+
+        // Create the team
+        var teamEntity = mapper.Map<VacationManager.Data.Models.Team>(Team);
+        var teamPrototypeEntity = mapper.Map<TeamPrototype>(teamEntity);
+
+        await teamService.CreateAsync(teamPrototypeEntity, cancellationToken);
+
+        NavManager.NavigateTo("/teams");
     }
 }

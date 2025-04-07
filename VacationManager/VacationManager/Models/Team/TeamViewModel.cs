@@ -13,5 +13,7 @@ namespace VacationManager.Models.Team
 
 
         public List<ApplicationUser> Developers { get; set; } = new();
+
+        public ApplicationUser TeamLead { get; set; }
     }
 }

@@ -17,4 +17,6 @@ public interface IAuthenticationContext
     ApplicationUser? CurrentUser { get; }
 
     void Authenticate(ApplicationUser user);
+    Task<ApplicationUser?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken);
+
 }

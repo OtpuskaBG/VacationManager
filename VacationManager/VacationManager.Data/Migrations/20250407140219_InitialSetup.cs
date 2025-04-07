@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace VacationManager.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialSetup : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -198,7 +198,8 @@ namespace VacationManager.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    TeamLeadId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -207,6 +208,12 @@ namespace VacationManager.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Teams", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Teams_AspNetUsers_TeamLeadId",
+                        column: x => x.TeamLeadId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Teams_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -281,6 +288,11 @@ namespace VacationManager.Data.Migrations
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Teams_TeamLeadId",
+                table: "Teams",
+                column: "TeamLeadId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Teams_UserId",
                 table: "Teams",
                 column: "UserId");
@@ -324,6 +336,10 @@ namespace VacationManager.Data.Migrations
             migrationBuilder.DropForeignKey(
                 name: "FK_Projects_AspNetUsers_UserId",
                 table: "Projects");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Teams_AspNetUsers_TeamLeadId",
+                table: "Teams");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Teams_AspNetUsers_UserId",

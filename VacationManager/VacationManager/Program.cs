@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
@@ -6,6 +7,18 @@ using VacationManager.Components;
 using VacationManager.Components.Account;
 using VacationManager.Data;
 using VacationManager.Data.Models;
+using VacationManager.Data.Enums;
+using VacationManager.Data.Repositories;
+using VacationManager.Data.Repositories.Abstractions;
+using VacationManager.Profiles;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using VacationManager.Core.Authentication.Abstractions;
+using VacationManager.Core.Authentication;
+using VacationManager.Core.Services.Abstractions;
+using VacationManager.Core.Services;
+using VacationManager.Middleware;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +50,21 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+Assembly currentAssembly = Assembly.GetExecutingAssembly();
+builder.Services.AddAutoMapper(currentAssembly);
+builder.Services.AddAutoMapper(typeof(TeamProfile));
+
+builder.Services.AddScoped<IAuthenticationContext, AuthenticationContext>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped(typeof(IIdentityRepository<>), typeof(IdentityRepository<>));
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -54,6 +81,11 @@ else
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseMiddleware<AuthenticationContextSetupMiddleware>();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>();

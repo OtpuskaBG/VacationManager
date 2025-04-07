@@ -13,12 +13,12 @@ public class Team : BaseEntity, IUserResource
     public string Name { get; set; }
 
 
-    public Guid ProjectId { get; set; }
-    public Project Project { get; set; }
+    public Guid? ProjectId { get; set; }
+    public Project? Project { get; set; }
 
 
-    //public Guid TeamLeadId { get; set; }
-    //public ApplicationUser TeamLead { get; set; }
+    public string? TeamLeadId { get; set; }
+    public ApplicationUser? TeamLead { get; set; }
 
 
     public List<ApplicationUser> Developers { get; set; } = new();

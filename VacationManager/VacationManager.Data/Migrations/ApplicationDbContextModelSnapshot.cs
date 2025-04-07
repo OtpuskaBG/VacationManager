@@ -334,8 +334,11 @@ namespace VacationManager.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("ProjectId")
+                    b.Property<Guid?>("ProjectId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TeamLeadId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
@@ -343,6 +346,8 @@ namespace VacationManager.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("TeamLeadId");
 
                     b.HasIndex("UserId");
 
@@ -434,8 +439,12 @@ namespace VacationManager.Data.Migrations
                     b.HasOne("VacationManager.Data.Models.Project", "Project")
                         .WithMany("Teams")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VacationManager.Data.Models.ApplicationUser", "TeamLead")
+                        .WithMany()
+                        .HasForeignKey("TeamLeadId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("VacationManager.Data.Models.ApplicationUser", "User")
                         .WithMany()
@@ -443,6 +452,8 @@ namespace VacationManager.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Project");
+
+                    b.Navigation("TeamLead");
 
                     b.Navigation("User");
                 });

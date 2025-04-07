@@ -25,5 +25,13 @@ public class TeamConfiguration : IEntityTypeConfiguration<Team>
                .WithMany()
                .HasForeignKey(t => t.UserId)
                .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(t => t.TeamLead)
+                .WithMany()
+                .HasForeignKey(t => t.TeamLeadId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+
     }
 }
