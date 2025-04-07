@@ -133,6 +133,9 @@
             await userService.ChangeRoleAsync(teamLeader, Role.TeamLead, cancellationToken);
         }
 
+        Team.TeamLead = teamLeader;
+        Team.User = authContext.CurrentUser;
+        Team.UserId = Team.User.Id;
         // Create the team
         var teamEntity = mapper.Map<VacationManager.Data.Models.Team>(Team);
         var teamPrototypeEntity = mapper.Map<TeamPrototype>(teamEntity);

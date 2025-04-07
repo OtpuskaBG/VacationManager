@@ -16,5 +16,9 @@ namespace VacationManager.Models.Team
 
         public ApplicationUser TeamLead { get; set; }
         public string TeamLeadId { get; set; } = "";
+        
+        
+        public string? UserId { get; set; } = string.Empty;
+        public ApplicationUser? User { get; set; }
     }
 }
