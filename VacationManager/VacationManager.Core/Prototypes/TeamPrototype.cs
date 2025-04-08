@@ -17,5 +17,8 @@ namespace VacationManager.Core.Prototypes
 
 
         public List<ApplicationUser> Developers { get; init; } = [];
+
+        public string? TeamLeadId { get; set; }
+        public ApplicationUser? TeamLead { get; set; }
     }
 }

@@ -9,6 +9,7 @@ using VacationManager.Core.Authentication.Abstractions;
 using VacationManager.Core.Authentication.Extensions;
 using VacationManager.Core.Prototypes;
 using VacationManager.Core.Services.Abstractions;
+using VacationManager.Data.Enums;
 using VacationManager.Data.Models;
 using VacationManager.Data.Repositories.Abstractions;
 
@@ -19,6 +20,9 @@ namespace VacationManager.Core.Services
         //private readonly ITeamService _teamService = teamService ?? throw new ArgumentNullException(nameof(teamService));
         //private readonly IProjectService _projectService = projectService ?? throw new ArgumentNullException(nameof(projectService));
         private readonly IAuthenticationContext _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
+        protected override Task<Team> InitializeAsync(TeamPrototype prototype, CancellationToken cancellationToken)
+         => Task.FromResult(new Team());
+
 
         protected override async Task ApplyAsync(Team entity, TeamPrototype prototype, CancellationToken cancellationToken)
         {
@@ -26,6 +30,20 @@ namespace VacationManager.Core.Services
             entity.Name = prototype.Name;
 
             entity.User = this._authContext.GetCurrentUserRequired();
+
+            if (!string.IsNullOrWhiteSpace(prototype.TeamLeadId))
+            {
+                var teamLeadGuid = Guid.Parse(prototype.TeamLeadId);
+                var teamLeadUser = await this._authContext.GetUserByIdAsync(teamLeadGuid, cancellationToken);
+
+                if (teamLeadUser == null)
+                {
+                    throw new ArgumentException($"Team lead with id {prototype.TeamLeadId} not found");
+                }
+
+                entity.TeamLeadId = prototype.TeamLeadId;
+                entity.TeamLead = teamLeadUser;
+            }
 
             //if (prototype.ProjectId.HasValue)
             //{
@@ -65,79 +83,46 @@ namespace VacationManager.Core.Services
 
 
         }
+        //public async Task<Team[]> GetAllAsync(CancellationToken cancellationToken)
+        //{
+        //    var filters = this.BuildFilters();
+
+        //    // Включваме нужните навигации
+        //    var includes = new[]
+        //    {
+        //        nameof(Team.Developers),
+        //        nameof(Team.TeamLead),
+        //        nameof(Team.Project),
+        //        nameof(Team.User)
+        //    };
+
+        //    return await this.Repository.GetManyWithNavigationsAsync(filters, includes, cancellationToken);
+        //}
         protected override IEnumerable<Expression<Func<Team, bool>>> BuildAdditionalFilters()
         {
             ApplicationUser currentUser = this._authContext.GetCurrentUserRequired();
             return [ti => ti.User == currentUser];
         }
+        //public async Task SoftDeleteAsync(Guid teamId, CancellationToken cancellationToken)
+        //{
+        //    var team = await this.Repository.GetCompleteAsync([t => t.Id == teamId], cancellationToken);
+        //    if (team == null) throw new ArgumentException("Team not found");
+
+        //    foreach (var dev in team.Developers)
+        //    {
+        //        await devService.ChangeRoleAsync(dev, Role.Unassigned, cancellationToken);
+        //    }
+
+        //    if (team.TeamLead is not null)
+        //    {
+        //        await devService.ChangeRoleAsync(team.TeamLead, Role.Unassigned, cancellationToken);
+        //    }
+
+        //    await this.Repository.DeleteAsync(team, cancellationToken);
+        //}
     }
 }
 
 
 
-//using Microsoft.AspNetCore.Identity;
-//using System.Linq.Expressions;
-//using VacationManager.Core.Authentication.Abstractions;
-//using VacationManager.Core.Authentication.Extensions;
-//using VacationManager.Core.Prototypes;
-//using VacationManager.Core.Services.Abstractions;
-//using VacationManager.Data.Models;
-//using VacationManager.Data.Repositories.Abstractions;
 
-//namespace VacationManager.Core.Services
-//{
-//    public class TeamService : BaseService<Team, TeamPrototype>, ITeamService
-//    {
-//        private readonly Lazy<IProjectService> _projectService;
-//        private readonly IAuthenticationContext _authContext;
-
-//        public TeamService(
-//            IRepository<Team> repository,
-//            Lazy<IProjectService> projectService,
-//            IAuthenticationContext authContext
-//        ) : base(repository)
-//        {
-//            _projectService = projectService ?? throw new ArgumentNullException(nameof(projectService));
-//            _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
-//        }
-
-//        protected override async Task ApplyAsync(Team entity, TeamPrototype prototype, CancellationToken cancellationToken)
-//        {
-//            entity.Name = prototype.Name;
-//            entity.User = _authContext.GetCurrentUserRequired();
-
-//            if (prototype.ProjectId.HasValue)
-//            {
-//                var project = await _projectService.Value.GetByIdRequiredAsync(prototype.ProjectId.Value, cancellationToken);
-//                entity.ProjectId = project.Id;
-//                entity.Project = project;
-//            }
-//            else
-//            {
-//                entity.Project = null;
-//                entity.ProjectId = default;
-//            }
-
-//            entity.Developers = new List<ApplicationUser>();
-//            if (prototype.Developers != null)
-//            {
-//                foreach (var developer in prototype.Developers)
-//                {
-//                    var userId = Guid.Parse(developer.Id);
-//                    var user = await _authContext.GetUserByIdAsync(userId, cancellationToken);
-//                    if (user == null)
-//                    {
-//                        throw new ArgumentException($"User with id {developer.Id} not found");
-//                    }
-//                    entity.Developers.Add(user);
-//                }
-//            }
-//        }
-
-//        protected override IEnumerable<Expression<Func<Team, bool>>> BuildAdditionalFilters()
-//        {
-//            var currentUser = _authContext.GetCurrentUserRequired();
-//            return [team => team.User == currentUser];
-//        }
-//    }
-//}

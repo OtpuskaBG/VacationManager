@@ -28,7 +28,7 @@ else
         <thead>
             <tr>
                 <th>Name</th>
-                @* <th>Team Leader</th> *@
+                <th>Team Leader</th>
                 <th>Developers</th>
                 <th>Actions</th>
             </tr>
@@ -38,7 +38,7 @@ else
             {
                 <tr>
                     <td>@team.Name</td>
-                    @* <td>@team.TeamLead?.FirstName @team.TeamLead?.LastName</td> *@
+                    <td>@team.TeamLead?.FirstName @team.TeamLead?.LastName</td>
                     <td>
                         @foreach (var developer in team.Developers)
                         {
@@ -85,5 +85,7 @@ else
         await teamService.SoftDeleteAsync(teamId, cancellationToken);
         // Reload the list after deletion
         teams = await teamService.GetAllAsync(cancellationToken);
+
+        
     }
 }

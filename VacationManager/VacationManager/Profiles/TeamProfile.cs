@@ -13,6 +13,13 @@ namespace VacationManager.Profiles
             this.CreateMap<Team, TeamViewModel>();
             this.CreateMap<Team, TeamPrototype>();
             this.CreateMap<VacationManager.Data.Models.Team, VacationManager.Components.Pages.Team.Team>();
+            this.CreateMap<TeamViewModel, Team>()
+                .ForMember(dest => dest.TeamLeadId, opt => opt.MapFrom(src => src.TeamLeadId));
+
+            this.CreateMap<Team, TeamPrototype>()
+                .ForMember(dest => dest.TeamLeadId, opt => opt.MapFrom(src => src.TeamLeadId));
+
+
         }
     }
 }

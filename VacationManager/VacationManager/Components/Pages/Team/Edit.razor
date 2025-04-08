@@ -1,74 +1,158 @@
-﻿@* @page "/teams/edit/{TeamId:guid}"
+﻿@page "/teams/edit/{teamId}"
+
+@using AutoMapper
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Models.Team
+@using Microsoft.AspNetCore.Identity
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Core.Prototypes
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Enums
+@using VacationManager.Data.Models
+
 @inject ITeamService teamService
 @inject IProjectService projectService
 @inject IAuthenticationContext authContext
-@using VacationManager.Core.Services.Abstractions
-@using VacationManager.Data.Models
-@using VacationManager.Data.Enums
-@using VacationManager.Core.Authentication.Abstractions
-@using VacationManager.Core.Prototypes
+@inject NavigationManager NavManager
+@inject IMapper mapper
+@inject IUserService userService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserManager<ApplicationUser> UserManager
 
-<AuthorizeView Roles="CEO">
-    <EditForm Model="team" OnValidSubmit="HandleValidSubmit">
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+<EditForm Model="Team" OnValidSubmit="UpdateTeam" FormName="EditForm">
+    <ChildContent Context="teamContext">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-        <MudTextField Label="Team Name" @bind-Value="team.Name" Class="mt-2" />
+        <div>
+            <label>Name:</label>
+            <InputText @bind-Value="Team.Name" class="form-control" />
+            <ValidationMessage For="@(() => Team.Name)" />
+        </div>
 
-        <MudSelect T="Guid" Label="Project" @bind-Value="team.ProjectId" Class="mt-2">
-            <MudSelectItem T="Guid" Value="">-- Select Project --</MudSelectItem>
-            @foreach (var project in projects)
+        <div class="mb-3">
+            <label class="form-label">Choose Developers:</label>
+            @foreach (var user in unassignedUsers)
             {
-                <MudSelectItem T="Guid" Value="@project.Id">@project.Name</MudSelectItem>
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="dev_@user.Id"
+                           value="@user.Id"
+                           checked="@selectedUsers.Contains(user)"
+                           @onchange="(e) => OnDeveloperChange(user, (bool)e.Value)" />
+                    <label class="form-check-label" for="dev_@user.Id">@user.FirstName @user.LastName</label>
+                </div>
             }
-        </MudSelect>
+        </div>
 
-        <MudSelect T="Guid" Label="Team Leader" @bind-Value="team.UserId" Class="mt-2">
-            <MudSelectItem T="Guid" Value="">-- Select Team Leader --</MudSelectItem>
-            @foreach (var user in users)
-            {
-                <MudSelectItem T="Guid" Value="@user.Id">@user.UserName</MudSelectItem>
-            }
-        </MudSelect>
+        <div class="mb-3">
+            <label for="teamLeader" class="form-label">Choose Team Leader:</label>
+            <InputSelect @bind-Value="Team.TeamLeadId" id="teamLeader" class="form-select">
+                <option value="">-- Select Team Leader --</option>
+                @foreach (var developer in selectedUsers)
+                {
+                    <option value="@developer.Id">@developer.FirstName @developer.LastName</option>
+                }
+            </InputSelect>
+        </div>
 
-        <MudSelect T="Guid" Label="Developers" @bind-Value="team.Developers" Class="mt-2" MultiSelection="true">
-            @foreach (var user in users)
-            {
-                <MudSelectItem T="Guid" Value="@user.Id">@user.UserName</MudSelectItem>
-            }
-        </MudSelect>
-
-        <MudButton Type="submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">Save</MudButton>
-    </EditForm>
-</AuthorizeView>
+        <button type="submit" class="btn btn-primary mt-4">Update Team</button>
+    </ChildContent>
+</EditForm>
 
 @code {
-    [Parameter] public Guid TeamId { get; set; }
-    private Team team = new();
-    private List<Project> projects = new(); // Get this from a service or context
-    private List<ApplicationUser> users = new(); // Get this from a service or context
+    [SupplyParameterFromForm(FormName = "TeamForm")]
+    private TeamViewModel Team { get; set; } = new();
+
+    private Project[] projects = [];
+    private ApplicationUser[] unassignedUsers = [];
+    private List<ApplicationUser> selectedUsers = new();
+    private bool isChecked;
+
+    CancellationToken cancellationToken = new();
+
+    [Parameter] public string teamId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        // Load projects and users from the appropriate services
-        projects = await projectService.GetAllAsync(CancellationToken.None);
-        users = await authContext.GetAllUsersAsync(CancellationToken.None);
+        
+        var allUsers = await userService.GetAllAsync(cancellationToken);
+        unassignedUsers = allUsers.Where(u => u.Role != Role.CEO).ToArray();
 
-        // Fetch the existing team using the TeamId parameter
-        team = await teamService.GetByIdAsync(TeamId, CancellationToken.None);
+        var existingTeam = await teamService.GetByIdAsync(Guid.Parse(teamId), cancellationToken);
+        if (existingTeam != null)
+        {
+            Team = mapper.Map<TeamViewModel>(existingTeam);
+            selectedUsers = existingTeam.Developers.ToList();
+            unassignedUsers = unassignedUsers.Where(u => !selectedUsers.Contains(u)).ToArray();
+        }
     }
 
-    private async Task HandleValidSubmit()
+    private void OnDeveloperChange(ApplicationUser user, bool isChecked)
     {
-        try
+        if (isChecked)
         {
-            // Update the team using the TeamService
-            await teamService.UpdateAsync(team, CancellationToken.None);
-            // Redirect or notify on success
+            if (!selectedUsers.Contains(user))
+            {
+                selectedUsers.Add(user);
+            }
         }
-        catch (Exception ex)
+        else
         {
-            // Handle error
+            selectedUsers.Remove(user);
         }
+
+        StateHasChanged();
     }
-} *@
+
+    private async Task UpdateTeam()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+            }
+        }
+
+        
+        foreach (var user in selectedUsers)
+        {
+            if (user.Id != Team.TeamLeadId)
+            {
+                await userService.ChangeRoleAsync(user, Role.Developer, cancellationToken);
+            }
+        }
+
+        
+        var teamLeader = selectedUsers.FirstOrDefault(u => u.Id == Team.TeamLeadId);
+        if (teamLeader != null)
+        {
+            await userService.ChangeRoleAsync(teamLeader, Role.TeamLead, cancellationToken);
+        }
+
+        Team.TeamLead = teamLeader;
+        Team.User = authContext.CurrentUser;
+        Team.UserId = Team.User.Id;
+
+        
+        var teamEntity = mapper.Map<VacationManager.Data.Models.Team>(Team);
+        var teamPrototypeEntity = mapper.Map<TeamPrototype>(teamEntity);
+
+        await teamService.UpdateAsync(teamEntity.Id, teamPrototypeEntity, cancellationToken);
+
+        NavManager.NavigateTo("/teams");
+
+
+        //same problem as the one in create where it gives an error when the button is clicked
+        //the user database is update but the team tatabase is not
+    }
+}
