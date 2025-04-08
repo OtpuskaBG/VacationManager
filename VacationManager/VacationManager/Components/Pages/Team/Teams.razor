@@ -65,8 +65,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var teamsResult = await teamService.GetAllAsync(cancellationToken);
-        teams = teamsResult.ToArray();
+        teams = await teamService.GetAllAsync(cancellationToken);
+        Console.WriteLine(string.Join(", ", teams.Select(t => t.Name)));
     }
 
     private void NavigateToCreatePage()

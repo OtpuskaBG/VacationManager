@@ -158,8 +158,6 @@
 
         NavManager.NavigateTo("/teams");
 
-        string REVERSE = Console.IsOutputRedirected ? "" : "\x1b[7m";
-        string NORMAL = Console.IsOutputRedirected ? "" : "\x1b[39m";
-        Console.WriteLine($"TeamLeadId: {REVERSE}{Team.TeamLeadId}{NORMAL}");
+        Console.WriteLine($"TeamLeadId: {Team.TeamLeadId}");
     }
 }

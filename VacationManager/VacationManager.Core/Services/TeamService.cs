@@ -83,21 +83,19 @@ namespace VacationManager.Core.Services
 
 
         }
-        //public async Task<Team[]> GetAllAsync(CancellationToken cancellationToken)
-        //{
-        //    var filters = this.BuildFilters();
+        public async Task<Team[]> GetAllAsync(CancellationToken cancellationToken)
+        {
+            // Включваме нужните навигации
+            var includes = new[]
+            {
+                nameof(Team.Developers),
+                nameof(Team.TeamLead),
+                nameof(Team.Project),
+                nameof(Team.User)
+            };
 
-        //    // Включваме нужните навигации
-        //    var includes = new[]
-        //    {
-        //        nameof(Team.Developers),
-        //        nameof(Team.TeamLead),
-        //        nameof(Team.Project),
-        //        nameof(Team.User)
-        //    };
-
-        //    return await this.Repository.GetManyWithNavigationsAsync(filters, includes, cancellationToken);
-        //}
+            return await repository.GetManyWithNavigationsAsync([], includes, cancellationToken);
+        }
         protected override IEnumerable<Expression<Func<Team, bool>>> BuildAdditionalFilters()
         {
             ApplicationUser currentUser = this._authContext.GetCurrentUserRequired();
