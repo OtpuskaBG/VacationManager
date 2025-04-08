@@ -12,7 +12,7 @@ using VacationManager.Data;
 namespace VacationManager.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250407140219_InitialSetup")]
+    [Migration("20250408180114_InitialSetup")]
     partial class InitialSetup
     {
         /// <inheritdoc />
@@ -158,6 +158,21 @@ namespace VacationManager.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("TeamDevelopers", b =>
+                {
+                    b.Property<string>("DeveloperId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("DeveloperId", "TeamId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("TeamDevelopers", (string)null);
+                });
+
             modelBuilder.Entity("VacationManager.Data.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -214,9 +229,6 @@ namespace VacationManager.Data.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("TeamId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -233,8 +245,6 @@ namespace VacationManager.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("TeamId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -408,14 +418,19 @@ namespace VacationManager.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("VacationManager.Data.Models.ApplicationUser", b =>
+            modelBuilder.Entity("TeamDevelopers", b =>
                 {
-                    b.HasOne("VacationManager.Data.Models.Team", "Team")
-                        .WithMany("Developers")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                    b.HasOne("VacationManager.Data.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("DeveloperId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Team");
+                    b.HasOne("VacationManager.Data.Models.Team", null)
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VacationManager.Data.Models.LeaveRequest", b =>
@@ -452,7 +467,7 @@ namespace VacationManager.Data.Migrations
                     b.HasOne("VacationManager.Data.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Project");
 
@@ -469,11 +484,6 @@ namespace VacationManager.Data.Migrations
             modelBuilder.Entity("VacationManager.Data.Models.Project", b =>
                 {
                     b.Navigation("Teams");
-                });
-
-            modelBuilder.Entity("VacationManager.Data.Models.Team", b =>
-                {
-                    b.Navigation("Developers");
                 });
 #pragma warning restore 612, 618
         }

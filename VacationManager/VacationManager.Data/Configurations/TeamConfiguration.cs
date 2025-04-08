@@ -24,12 +24,21 @@ public class TeamConfiguration : IEntityTypeConfiguration<Team>
         builder.HasOne(t => t.User)
                .WithMany()
                .HasForeignKey(t => t.UserId)
-               .OnDelete(DeleteBehavior.SetNull);
+               .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(t => t.Developers)
+                .WithMany()
+                .UsingEntity<Dictionary<string, object>>(
+                "TeamDevelopers",
+                r => r.HasOne<ApplicationUser>().WithMany().HasForeignKey("DeveloperId"),
+                l => l.HasOne<Team>().WithMany().HasForeignKey("TeamId")
+                .OnDelete(DeleteBehavior.Restrict))
+                .ToTable("TeamDevelopers");
 
         builder.HasOne(t => t.TeamLead)
-                .WithMany()
-                .HasForeignKey(t => t.TeamLeadId)
-                .OnDelete(DeleteBehavior.Restrict);
+               .WithMany()
+               .HasForeignKey(t => t.TeamLeadId)
+               .OnDelete(DeleteBehavior.Restrict);
 
 
 

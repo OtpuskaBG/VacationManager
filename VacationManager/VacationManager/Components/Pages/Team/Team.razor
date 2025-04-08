@@ -72,14 +72,22 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var teamGuid = Guid.Parse(teamId);
+        if (!Guid.TryParse(teamId, out var teamGuid))
+        {
+            Console.WriteLine("❌ Invalid teamId in URL!");
+            return;
+        }
+
         team = await teamService.GetByIdAsync(teamGuid, cancellationToken);
 
-        if (team != null)
+        if (team == null)
         {
-            var allProjects = await projectService.GetAllAsync(cancellationToken);
-            //Projects = allProjects.Where(p => p.Teams == Team.Id).ToList();
+            Console.WriteLine($"❌ No team found with id {teamGuid}");
+            return;
         }
+
+        var allProjects = await projectService.GetAllAsync(cancellationToken);
+        Projects = allProjects.Where(p => p.Teams.Any(t => t.Id == team.Id)).ToList();
     }
 
     private void GoBack()
