@@ -47,6 +47,7 @@ else
                         }
                     </td>
                     <td>
+                        <button class="btn btn-primary" @onclick="() => DetailsTeam(team.Id)">Details</button>
                         <button class="btn btn-warning" @onclick="() => EditTeam(team.Id)">Edit</button>
                         <button class="btn btn-danger" @onclick="() => DeleteTeam(team.Id)">Delete</button>
                     </td>
@@ -75,10 +76,12 @@ else
 
     private async Task EditTeam(Guid teamId)
     {
-        // Navigate to the edit page for the selected team
         NavManager.NavigateTo($"/teams/edit/{teamId}");
     }
-
+    private async Task DetailsTeam(Guid teamId)
+    {
+        NavManager.NavigateTo($"/teams/{teamId}");
+    }
     private async Task DeleteTeam(Guid teamId)
     {
         // Delete the team from the database
