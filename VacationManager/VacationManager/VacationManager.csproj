@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Models\LeaveRequest\" />
     <Folder Include="Models\Project\" />
   </ItemGroup>
 
