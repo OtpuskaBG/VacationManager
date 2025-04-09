@@ -10,6 +10,7 @@
 
 @inject ILeaveRequestService leaveRequestService
 @inject IAuthenticationContext authContext
+@inject IMapper mapper
 @inject NavigationManager NavManager
 
 
@@ -54,7 +55,7 @@ else
 }
 
 @code {
-    private VacationManager.Data.Models.LeaveRequest[] requests = [];
+    private LeaveRequestViewModel[] requests = [];
 
     CancellationToken cancellationToken = new();
 
@@ -63,12 +64,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var userId = AuthContext.CurrentUser?.Id;
+        var currentUser = authContext.CurrentUser;
+        if(currentUser is null)
+        {
+            requests = Array.Empty<LeaveRequestViewModel>();
+            return;
+        }
         var all = await leaveRequestService.GetAllAsync(cancellationToken);
-        requests = all
-            .Where(r => r.UserId == userId)
-            .Select(r => Mapper.Map<LeaveRequestViewModel>(r))
-            .ToList();
+        requests = all.Where(r => r.UserId == currentUser.Id).Select(r => mapper.Map<LeaveRequestViewModel>(r)).ToArray();
     }
 
     private void NavigateToCreatePage()
@@ -93,7 +96,8 @@ else
     {
         // Delete the team from the database
         await leaveRequestService.SoftDeleteAsync(LRId, cancellationToken);
+        var all = await leaveRequestService.GetAllAsync(cancellationToken);
         // Reload the list after deletion
-        requests = await leaveRequestService.GetAllAsync(cancellationToken);
+        requests = all.Select(r => mapper.Map<LeaveRequestViewModel>(r)).ToArray();
     }
 }

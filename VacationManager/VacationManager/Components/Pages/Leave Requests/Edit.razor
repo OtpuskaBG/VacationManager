@@ -28,7 +28,7 @@
 {
     <p>Loading...</p>
 }
-else if (request == null)
+else if (leaveRequest == null)
 {
     <p class="text-danger">Leave request not found or already approved.</p>
 }
@@ -78,21 +78,28 @@ else
 }
 
 @code {
-    private LeaveRequest? request;
-    private LeaveRequestViewModel editModel = new();
+    [Parameter] public Guid leaveRequestId { get; set; }
+
+    private LeaveRequestViewModel? leaveRequest;
     private bool isLoading = true;
 
-    private LeaveRequestViewModel leaveRequest = new();
+    private CancellationToken cancellationToken = new();
 
-    CancellationToken cancellationToken = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var entity = await leaveRequestService.GetByIdAsync(leaveRequestId, cancellationToken);
+        if (entity == null || entity.Approved) leaveRequest = null;
+        else leaveRequest = mapper.Map<LeaveRequestViewModel>(entity);
+        isLoading = false;
+    }
 
     private async Task EditRequest()
     {
         //TODO: fix the leave request prototype issue.
-
-        var prototype = Mapper.Map<LeaveRequestPrototype>(leaveRequest);
-        prototype.RequestDate = DateTime.UtcNow;
-        await leaveRequestService.CreateAsync(prototype, cancellationToken);
+        if (leaveRequest == null) return;
+        var prototype = mapper.Map<LeaveRequestPrototype>(leaveRequest);
+        await leaveRequestService.UpdateAsync(leaveRequestId, prototype, cancellationToken);
         NavManager.NavigateTo("/leaveRequests");
     }
 

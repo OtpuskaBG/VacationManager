@@ -10,6 +10,7 @@
 
 @inject ILeaveRequestService leaveRequestService
 @inject IAuthenticationContext authContext
+@inject IMapper mapper
 @inject NavigationManager NavManager
 
 
@@ -56,13 +57,13 @@ else
 }
 
 @code {
-    private List<LeaveRequestViewModel> requests = new();
+    private LeaveRequestViewModel[] requests = [];
 
     CancellationToken cancellationToken = new();
 
     protected override async Task OnInitializedAsync()
     {
         var all = await leaveRequestService.GetAllAsync(cancellationToken);
-        requests = all.Select(r => Mapper.Map<LeaveRequestViewModel>(r)).ToList();
+        requests = all.Select(r => mapper.Map<LeaveRequestViewModel>(r)).ToArray();
     }
 }

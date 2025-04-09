@@ -64,8 +64,7 @@
     {
         //TODO: fix the leave request prototype issue.
 
-        var prototype = Mapper.Map<LeaveRequestPrototype>(leaveRequest);
-        prototype.requestDate = DateTime.UtcNow;
+        var prototype = mapper.Map<LeaveRequestPrototype>(leaveRequest);
         await leaveRequestService.CreateAsync(prototype, cancellationToken);
 
         NavManager.NavigateTo("/leaveRequests");
