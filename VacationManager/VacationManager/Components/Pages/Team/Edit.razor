@@ -36,15 +36,23 @@
         <h3>Current Developers</h3>
         @if (selectedUsers.Any())
         {
-            <ul>
+            <div class="scrollable-list">
+
                 @foreach (var user in selectedUsers)
                 {
-                    <li>
-                        @user.FirstName @user.LastName
-                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveDeveloper(user)">Remove</button>
-                    </li>
+                    <div class="col-md-3">
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h5 class="card-title">@user.FirstName @user.LastName</h5>
+                                <button class="btn btn-danger btn-sm" @onclick="() => RemoveDeveloper(user)" type="button">
+                                    <i class="bi bi-x-circle"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 }
-            </ul>
+
+            </div>
         }
         else
         {
@@ -56,20 +64,29 @@
         <h3>Add Developers</h3>
         @if (availableUsers.Any())
         {
-            <ul>
+            <div class="scrollable-list">
+
                 @foreach (var user in availableUsers)
                 {
-                    <li>
-                        @user.FirstName @user.LastName
-                        <button class="btn btn-sm btn-success" @onclick=" async () => await AddDeveloper(user)">Add</button>
-                    </li>
+                    <div class="col-md-3">
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h5 class="card-title">@user.FirstName @user.LastName</h5>
+                                <button class="btn btn-success btn-sm" @onclick="async () => await AddDeveloper(user)" type="button">
+                                    <i class="bi bi-plus-circle"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 }
-            </ul>
+
+            </div>
         }
         else
         {
             <p>No available unassigned users.</p>
         }
+
 
         <div class="mb-3">
             <label for="teamLeader" class="form-label">Choose Team Leader:</label>
@@ -84,9 +101,10 @@
         <td>
             <div class="d-flex justify-content-between">
                 <button type="submit" class="btn btn-primary mt-3" style="margin:5px">Update Team</button>
-                <button class="btn btn-secondary mt-3" @onclick="GoBack">Back</button>
+                <button class="btn btn-secondary mt-3" @onclick="GoBack" type="button">Back</button>
             </div>
         </td>
+        <div class="footer-space"></div>
     </ChildContent>
 </EditForm>
 
@@ -123,6 +141,8 @@
                 .Where(u => u.Role == Role.Unassigned && !selectedIds.Contains(u.Id))
                 .ToList();
         }
+        Team = mapper.Map<TeamViewModel>(existingTeam);
+        Team.Id = existingTeam.Id;
     }
     //doesnt change the role in the database
     //update not working
@@ -130,7 +150,6 @@
     {
         selectedUsers.Remove(user);
         availableUsers.Add(user);
-        await userService.ChangeRoleAsync(user, Role.Unassigned, cancellationToken);
         StateHasChanged();
     }
 
@@ -138,7 +157,6 @@
     {
         availableUsers.Remove(user);
         selectedUsers.Add(user);
-        await userService.ChangeRoleAsync(user, Role.Developer, cancellationToken);
         StateHasChanged();
     }
 
@@ -168,53 +186,46 @@
 
         if (httpContext?.User?.Identity is { IsAuthenticated: true })
         {
-            var user = await UserManager.GetUserAsync(httpContext.User);
-            if (user != null)
+            var currentUser = await UserManager.GetUserAsync(httpContext.User);
+            if (currentUser != null)
             {
-                authContext.Authenticate(user);
+                authContext.Authenticate(currentUser);
             }
         }
 
         if (!selectedUsers.Any())
         {
-            await teamService.SoftDeleteAsync(Guid.Parse(teamId), cancellationToken);
+            await teamService.SoftDeleteAsync(Team.Id, cancellationToken);
             NavManager.NavigateTo("/teams");
             return;
         }
 
-        foreach (var user in selectedUsers)
+
+        foreach (var user in availableUsers)
         {
-            if (user.Id != Team.TeamLeadId)
-            {
-                await userService.ChangeRoleAsync(user, Role.Developer, cancellationToken);
-            }
+            await userService.ChangeRoleAsync(user, Role.Unassigned, cancellationToken);
         }
 
-
-        var teamLeader = selectedUsers.FirstOrDefault(u => u.Id == Team.TeamLeadId);
-        if (teamLeader != null)
+        foreach (var dev in selectedUsers)
         {
-            await userService.ChangeRoleAsync(teamLeader, Role.TeamLead, cancellationToken);
+            var newRole = dev.Id == Team.TeamLeadId ? Role.TeamLead : Role.Developer;
+            await userService.ChangeRoleAsync(dev, newRole, cancellationToken);
         }
 
-        Team.TeamLead = teamLeader;
         Team.User = authContext.CurrentUser;
         Team.UserId = Team.User.Id;
 
-        Team.Developers = selectedUsers
-            .Where(u => u.Id != Team.TeamLeadId)
-            .ToList();
+        var teamLeader = selectedUsers.FirstOrDefault(u => u.Id == Team.TeamLeadId);
+        Team.TeamLead = teamLeader;
 
+        Team.Developers = selectedUsers.ToList();
 
         var teamEntity = mapper.Map<VacationManager.Data.Models.Team>(Team);
-        var teamPrototypeEntity = mapper.Map<TeamPrototype>(teamEntity);
+        var teamPrototype = mapper.Map<TeamPrototype>(teamEntity);
 
-        await teamService.UpdateAsync(teamEntity.Id, teamPrototypeEntity, cancellationToken);
+        await teamService.UpdateAsync(Team.Id, teamPrototype, cancellationToken);
 
-        NavManager.NavigateTo($"/teams");
-
-
-        //same problem as the one in create where it gives an error when the button is clicked
-        //the user database is update but the team tatabase is not
+        NavManager.NavigateTo("/teams");
     }
+
 }

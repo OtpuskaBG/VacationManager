@@ -1,0 +1,37 @@
+﻿.scrollable-list {
+    max-height: 300px;
+    overflow-y: auto; 
+    margin-top: 10px;
+}
+
+    .scrollable-list ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .scrollable-list li {
+        margin-bottom: 5px;
+    }
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 50px; 
+}
+
+.footer-space {
+    height: 50px;
+    background-color: transparent;
+}

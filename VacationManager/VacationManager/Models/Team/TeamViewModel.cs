@@ -11,7 +11,7 @@ namespace VacationManager.Models.Team
         public Project Project { get; set; }
 
 
-
+        public Guid Id { get; set; }
         public List<ApplicationUser> Developers { get; set; } = new();
 
         public ApplicationUser TeamLead { get; set; }

@@ -10,5 +10,6 @@ namespace VacationManager.Core.Services.Abstractions
 {
     public interface ITeamService : IService<Team, TeamPrototype>
     {
+        Task<Team> GetTeamByUserIdAsync(string userId, CancellationToken cancellationToken);
     }
 }
