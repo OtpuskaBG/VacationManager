@@ -1,0 +1,108 @@
+﻿@page "/leaveRequests/edit/{leaveRequestId}"
+
+@using AutoMapper
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Models.LeaveRequest
+@using Microsoft.AspNetCore.Identity
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Core.Prototypes
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Enums
+@using VacationManager.Data.Models
+
+@inject ILeaveRequestService leaveRequestService
+@inject IAuthenticationContext authContext
+@inject NavigationManager NavManager
+@inject IMapper mapper
+@inject IUserService userService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserManager<ApplicationUser> UserManager
+
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+<h3>Edit Leave Request</h3>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (request == null)
+{
+    <p class="text-danger">Leave request not found or already approved.</p>
+}
+else
+{
+    <EditForm Model="leaveRequest" OnValidSubmit="EditRequest">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label>Start Date:</label>
+            <InputDate @bind-Value="leaveRequest.StartDate" class="form-control" />
+        </div>
+
+        <div>
+            <label>End Date:</label>
+            <InputDate @bind-Value="leaveRequest.EndDate" class="form-control" />
+        </div>
+
+        <div>
+            <label>Leave Type:</label>
+            <InputSelect @bind-Value="leaveRequest.Type" class="form-control">
+                @foreach (var type in Enum.GetValues<LeaveType>())
+                {
+                    <option value="@type">@type</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div>
+            <label>Half Day:</label>
+            <InputCheckbox @bind-Value="leaveRequest.HalfDay" />
+        </div>
+
+        @*TODO: Make it so that the "Attachment" prompt is only visable when the request type is "Sick".*@
+
+        <div>
+            <label>Attachment (Only for Sick Leave):</label>
+            <InputText @bind-Value="leaveRequest.AttachmentPath" class="form-control" />
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary mt-3" style="margin:5px">Update Request</button>
+            <button class="btn btn-secondary mt-3" @onclick="GoBack" type="button">Back</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    private LeaveRequest? request;
+    private LeaveRequestViewModel editModel = new();
+    private bool isLoading = true;
+
+    private LeaveRequestViewModel leaveRequest = new();
+
+    CancellationToken cancellationToken = new();
+
+    private async Task EditRequest()
+    {
+        //TODO: fix the leave request prototype issue.
+
+        var prototype = Mapper.Map<LeaveRequestPrototype>(leaveRequest);
+        prototype.RequestDate = DateTime.UtcNow;
+        await leaveRequestService.CreateAsync(prototype, cancellationToken);
+        NavManager.NavigateTo("/leaveRequests");
+    }
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/leaveRequests");
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        // handle file logic
+    }
+}
