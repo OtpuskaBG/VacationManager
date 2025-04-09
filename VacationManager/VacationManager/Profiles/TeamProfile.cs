@@ -19,6 +19,13 @@ namespace VacationManager.Profiles
             this.CreateMap<Team, TeamPrototype>()
                 .ForMember(dest => dest.TeamLeadId, opt => opt.MapFrom(src => src.TeamLeadId));
 
+            this.CreateMap<Team, TeamViewModel>()
+                .ForMember(dest => dest.Developers, opt => opt.MapFrom(src => src.Developers));
+
+            this.CreateMap<TeamViewModel, TeamPrototype>()
+                .ForMember(dest => dest.Developers, opt => opt.MapFrom(src => src.Developers));
+
+
 
         }
     }

@@ -33,22 +33,43 @@
             <InputText @bind-Value="Team.Name" class="form-control" />
             <ValidationMessage For="@(() => Team.Name)" />
         </div>
+        <h3>Current Developers</h3>
+        @if (selectedUsers.Any())
+        {
+            <ul>
+                @foreach (var user in selectedUsers)
+                {
+                    <li>
+                        @user.FirstName @user.LastName
+                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveDeveloper(user)">Remove</button>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No developers in this team.</p>
+        }
 
-        <div class="mb-3">
-            <label class="form-label">Choose Developers:</label>
-            @foreach (var user in unassignedUsers)
-            {
-                <div class="form-check">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           id="dev_@user.Id"
-                           value="@user.Id"
-                           checked="@selectedUsers.Contains(user)"
-                           @onchange="(e) => OnDeveloperChange(user, (bool)e.Value)" />
-                    <label class="form-check-label" for="dev_@user.Id">@user.FirstName @user.LastName</label>
-                </div>
-            }
-        </div>
+        <hr />
+
+        <h3>Add Developers</h3>
+        @if (availableUsers.Any())
+        {
+            <ul>
+                @foreach (var user in availableUsers)
+                {
+                    <li>
+                        @user.FirstName @user.LastName
+                        <button class="btn btn-sm btn-success" @onclick=" async () => await AddDeveloper(user)">Add</button>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No available unassigned users.</p>
+        }
 
         <div class="mb-3">
             <label for="teamLeader" class="form-label">Choose Team Leader:</label>
@@ -60,8 +81,12 @@
                 }
             </InputSelect>
         </div>
-
-        <button type="submit" class="btn btn-primary mt-4">Update Team</button>
+        <td>
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary mt-3" style="margin:5px">Update Team</button>
+                <button class="btn btn-secondary mt-3" @onclick="GoBack">Back</button>
+            </div>
+        </td>
     </ChildContent>
 </EditForm>
 
@@ -73,6 +98,8 @@
     private ApplicationUser[] unassignedUsers = [];
     private List<ApplicationUser> selectedUsers = new();
     private bool isChecked;
+    private List<ApplicationUser> availableUsers = new(); // unassigned потребители
+
 
     CancellationToken cancellationToken = new();
 
@@ -80,7 +107,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        
+
         var allUsers = await userService.GetAllAsync(cancellationToken);
         unassignedUsers = allUsers.Where(u => u.Role != Role.CEO).ToArray();
 
@@ -89,8 +116,30 @@
         {
             Team = mapper.Map<TeamViewModel>(existingTeam);
             selectedUsers = existingTeam.Developers.ToList();
-            unassignedUsers = unassignedUsers.Where(u => !selectedUsers.Contains(u)).ToArray();
+
+            var selectedIds = selectedUsers.Select(u => u.Id).ToHashSet();
+
+            availableUsers = allUsers
+                .Where(u => u.Role == Role.Unassigned && !selectedIds.Contains(u.Id))
+                .ToList();
         }
+    }
+    //doesnt change the role in the database
+    //update not working
+    private async Task RemoveDeveloper(ApplicationUser user)
+    {
+        selectedUsers.Remove(user);
+        availableUsers.Add(user);
+        await userService.ChangeRoleAsync(user, Role.Unassigned, cancellationToken);
+        StateHasChanged();
+    }
+
+    private async Task AddDeveloper(ApplicationUser user)
+    {
+        availableUsers.Remove(user);
+        selectedUsers.Add(user);
+        await userService.ChangeRoleAsync(user, Role.Developer, cancellationToken);
+        StateHasChanged();
     }
 
     private void OnDeveloperChange(ApplicationUser user, bool isChecked)
@@ -109,7 +158,10 @@
 
         StateHasChanged();
     }
-
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/teams");
+    }
     private async Task UpdateTeam()
     {
         var httpContext = HttpContextAccessor.HttpContext;
@@ -123,7 +175,13 @@
             }
         }
 
-        
+        if (!selectedUsers.Any())
+        {
+            await teamService.SoftDeleteAsync(Guid.Parse(teamId), cancellationToken);
+            NavManager.NavigateTo("/teams");
+            return;
+        }
+
         foreach (var user in selectedUsers)
         {
             if (user.Id != Team.TeamLeadId)
@@ -132,7 +190,7 @@
             }
         }
 
-        
+
         var teamLeader = selectedUsers.FirstOrDefault(u => u.Id == Team.TeamLeadId);
         if (teamLeader != null)
         {
@@ -143,13 +201,17 @@
         Team.User = authContext.CurrentUser;
         Team.UserId = Team.User.Id;
 
-        
+        Team.Developers = selectedUsers
+            .Where(u => u.Id != Team.TeamLeadId)
+            .ToList();
+
+
         var teamEntity = mapper.Map<VacationManager.Data.Models.Team>(Team);
         var teamPrototypeEntity = mapper.Map<TeamPrototype>(teamEntity);
 
         await teamService.UpdateAsync(teamEntity.Id, teamPrototypeEntity, cancellationToken);
 
-        NavManager.NavigateTo("/teams");
+        NavManager.NavigateTo($"/teams");
 
 
         //same problem as the one in create where it gives an error when the button is clicked

@@ -96,6 +96,7 @@
                 }
             }
     }
+    
     private void OnDeveloperChange(ApplicationUser user, bool isChecked)
     {
         if (isChecked)
@@ -146,6 +147,7 @@
         {
             await userService.ChangeRoleAsync(teamLeader, Role.TeamLead, cancellationToken);
         }
+        Team.Developers = selectedUsers;
 
         Team.TeamLead = teamLeader;
         Team.User = authContext.CurrentUser;

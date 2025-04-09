@@ -135,66 +135,68 @@ namespace VacationManager.Core.Services
                 await userService.ChangeRoleAsync(team.TeamLead, Role.Unassigned, cancellationToken);
             }
 
+            team.Developers.Clear();
+
             await repository.DeleteAsync(team, cancellationToken);
         }
-        public async Task AddDevelopersToTeamAsync(Guid teamId, List<string> developerIds, CancellationToken cancellationToken)
-        {
-            var team = await repository.GetWithNavigationsAsync(
-                new Expression<Func<Team, bool>>[] { t => t.Id == teamId },
-                new[] { nameof(Team.Developers) },
-                cancellationToken);
+        //public async Task AddDevelopersToTeamAsync(Guid teamId, List<string> developerIds, CancellationToken cancellationToken)
+        //{
+        //    var team = await repository.GetWithNavigationsAsync(
+        //        new Expression<Func<Team, bool>>[] { t => t.Id == teamId },
+        //        new[] { nameof(Team.Developers) },
+        //        cancellationToken);
 
-            if (team == null)
-            {
-                throw new ArgumentException("Team not found");
-            }
+        //    if (team == null)
+        //    {
+        //        throw new ArgumentException("Team not found");
+        //    }
 
-            foreach (var developerId in developerIds)
-            {
-                var user = await _authContext.GetUserByIdAsync(Guid.Parse(developerId), cancellationToken);
+        //    foreach (var developerId in developerIds)
+        //    {
+        //        var user = await _authContext.GetUserByIdAsync(Guid.Parse(developerId), cancellationToken);
 
-                if (user != null && !team.Developers.Contains(user))
-                {
-                    await repository.AddAsync(new TeamDeveloper
-                    {
-                        TeamId = teamId,
-                        DeveloperId = Guid.Parse(developerId)
-                    }, cancellationToken);
+        //        if (user != null && !team.Developers.Contains(user))
+        //        {
+        //            await repository.AddAsync(new TeamDeveloper
+        //            {
+        //                TeamId = teamId,
+        //                DeveloperId = Guid.Parse(developerId)
+        //            }, cancellationToken);
 
-                    team.Developers.Add(user);
-                }
-            }
+        //            team.Developers.Add(user);
+        //        }
+        //    }
 
-            await repository.SaveChangesAsync(cancellationToken);
-        }
+        //    await repository.SaveChangesAsync(cancellationToken);
+        //}
 
-        public async Task RemoveDeveloperFromTeamAsync(Guid teamId, string developerId, CancellationToken cancellationToken)
-        {
-            var team = await repository.GetWithNavigationsAsync(
-                new Expression<Func<Team, bool>>[] { t => t.Id == teamId },
-                new[] { nameof(Team.Developers) },
-                cancellationToken);
+        //public async Task RemoveDeveloperFromTeamAsync(Guid teamId, string developerId, CancellationToken cancellationToken)
+        //{
+        //    var team = await repository.GetWithNavigationsAsync(
+        //        new Expression<Func<Team, bool>>[] { t => t.Id == teamId },
+        //        new[] { nameof(Team.Developers) },
+        //        cancellationToken);
 
-            if (team == null)
-            {
-                throw new ArgumentException("Team not found");
-            }
+        //    if (team == null)
+        //    {
+        //        throw new ArgumentException("Team not found");
+        //    }
 
-            var user = team.Developers.FirstOrDefault(d => d.Id == Guid.Parse(developerId));
+        //    var user = team.Developers.FirstOrDefault(d => d.Id == Guid.Parse(developerId));
 
-            if (user != null)
-            {
-                team.Developers.Remove(user);
+        //    if (user != null)
+        //    {
+        //        team.Developers.Remove(user);
 
-                await repository.DeleteAsync(new TeamDeveloper
-                {
-                    TeamId = teamId,
-                    DeveloperId = Guid.Parse(developerId)
-                }, cancellationToken);
+        //        await repository.DeleteAsync(new TeamDeveloper
+        //        {
+        //            TeamId = teamId,
+        //            DeveloperId = Guid.Parse(developerId)
+        //        }, cancellationToken);
 
-                await repository.SaveChangesAsync(cancellationToken);
-            }
-        }
+        //        await repository.SaveChangesAsync(cancellationToken);
+        //    }
+        //}
     }
 }
 
