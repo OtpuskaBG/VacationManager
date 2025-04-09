@@ -1,0 +1,68 @@
+﻿@page "/leaveRequests/review"
+
+@using AutoMapper
+@using VacationManager.Data.Models
+@using VacationManager.Core.Services.Abstractions
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Models.LeaveRequest
+
+
+@inject ILeaveRequestService leaveRequestService
+@inject IAuthenticationContext authContext
+@inject NavigationManager NavManager
+
+
+@rendermode RenderMode.InteractiveServer
+
+@*TODO: Make the approval page only accessable to CEO and Team Lead. And if Team Lead is the one making a request, then make it only visable for the CEO*@
+
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+@if (requests == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Type</th>
+                <th>Approved</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var request in requests)
+            {
+                <tr>
+                    <td>@request.StartDate.ToShortDateString()</td>
+                    <td>@request.EndDate.ToShortDateString()</td>
+                    <td>@request.Type</td>
+                    <td>@(request.Approved ? "Yes" : "No")</td>
+                    <td>
+                        <a href="/leaveRequests/edit/@request.Id">Edit</a> |
+                        <a href="/leaveRequests/details/@request.Id">Details</a>
+                    </td>
+
+                    <td><button></button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<LeaveRequestViewModel> requests = new();
+
+    CancellationToken cancellationToken = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var all = await leaveRequestService.GetAllAsync(cancellationToken);
+        requests = all.Select(r => Mapper.Map<LeaveRequestViewModel>(r)).ToList();
+    }
+}
