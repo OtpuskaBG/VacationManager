@@ -4,12 +4,9 @@
 @using VacationManager.Core.Services.Abstractions
 @using Microsoft.AspNetCore.Identity
 
-
 @inject ITeamService teamService
 @inject UserManager<ApplicationUser> UserManager
-
 @inject IHttpContextAccessor HttpContextAccessor
-
 
 <h3>My Team</h3>
 
@@ -27,28 +24,30 @@ else
 
 @code {
     private UserTeam userTeam;
-    CancellationToken cancellationToken = new CancellationToken();
+
     protected override async Task OnInitializedAsync()
     {
         var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
 
         if (currentUser != null)
         {
+            // Ensure sequential async calls by awaiting GetUserTeamAsync after UserManager
             userTeam = await GetUserTeamAsync(currentUser);
         }
     }
 
     private async Task<UserTeam> GetUserTeamAsync(ApplicationUser user)
     {
-        var team = await teamService.GetTeamByUserIdAsync(user.Id, cancellationToken);
+        var team = await teamService.GetTeamByUserIdAsync(user.Id, default);
+
         if (team != null)
         {
             var role = team.Developers.FirstOrDefault(d => d.Id == user.Id)?.Role.ToString() ?? "No Role";
             return new UserTeam
-                {
-                    Name = team.Name,
-                    Role = role
-                };
+            {
+                Name = team.Name,
+                Role = role
+            };
         }
         return null;
     }
