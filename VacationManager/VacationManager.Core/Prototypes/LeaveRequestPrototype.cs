@@ -20,5 +20,6 @@ namespace VacationManager.Core.Prototypes
 
 
         public string? AttachmentPath { get; init; } // Only for sick leave
+        public string? UserId { get; set; }
     }
 }

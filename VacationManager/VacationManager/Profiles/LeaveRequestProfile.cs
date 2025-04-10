@@ -13,6 +13,8 @@ namespace VacationManager.Profiles
 
             this.CreateMap<LeaveRequest, LeaveRequestViewModel>();
             this.CreateMap<LeaveRequestPrototype, LeaveRequest>();
+            this.CreateMap<LeaveRequest, LeaveRequestPrototype>();
+            this.CreateMap<LeaveRequestViewModel, LeaveRequestPrototype>();
         }
     }
 }

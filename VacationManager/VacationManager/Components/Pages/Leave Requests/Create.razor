@@ -9,10 +9,13 @@
 @using VacationManager.Core.Services.Abstractions
 @using VacationManager.Data.Enums
 @using VacationManager.Data.Models
+@inject IHttpContextAccessor HttpContextAccessor
 
 @inject ILeaveRequestService leaveRequestService
 @inject NavigationManager NavManager
 @inject IMapper mapper
+@inject UserManager<ApplicationUser> UserManager
+@inject IAuthenticationContext authContext
 
 @rendermode RenderMode.InteractiveServer
 
@@ -62,11 +65,35 @@
 
     private async Task CreateRequest()
     {
-        //TODO: fix the leave request prototype issue.
-
         var prototype = mapper.Map<LeaveRequestPrototype>(leaveRequest);
-        await leaveRequestService.CreateAsync(prototype, cancellationToken);
 
+        // Взимаме текущия контекст
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+
+                prototype.UserId = user.Id;
+
+                Console.WriteLine($"✅ User set: {user.UserName}, Role: {user.Role}");
+            }
+            else
+            {
+                Console.WriteLine("❌ current user not found");
+                return;
+            }
+        }
+        else
+        {
+            Console.WriteLine("❌ ho user has logged in");
+            return;
+        }
+
+        await leaveRequestService.CreateAsync(prototype, cancellationToken);
         NavManager.NavigateTo("/leaveRequests");
     }
 
