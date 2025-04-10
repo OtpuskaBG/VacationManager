@@ -15,7 +15,7 @@ public class LeaveRequest : BaseEntity, IUserResource
     public DateTime EndDate { get; set; }
     public DateTime RequestDate { get; set; }
     public bool HalfDay { get; set; }
-    public bool Approved { get; set; }
+    public ApprovalStatus ApprovalStatus { get; set; }
 
     //public string RequesterId { get; set; }
     //public ApplicationUser Requester { get; set; }

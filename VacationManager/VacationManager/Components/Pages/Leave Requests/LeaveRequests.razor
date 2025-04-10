@@ -6,52 +6,47 @@
 @using Microsoft.AspNetCore.Authorization
 @using VacationManager.Core.Authentication.Abstractions
 @using VacationManager.Models.LeaveRequest
-
+@using Microsoft.AspNetCore.Identity
 
 @inject ILeaveRequestService leaveRequestService
 @inject IAuthenticationContext authContext
 @inject IMapper mapper
 @inject NavigationManager NavManager
-
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
 
 @rendermode RenderMode.InteractiveServer
-
 @attribute [Authorize(Policy = "RequireCEORole")]
+
+<h3 class="mb-4">📋 All Leave Requests</h3>
 
 @if (requests == null)
 {
     <p><em>Loading...</em></p>
 }
+else if (requests.Length == 0)
+{
+    <p><em>No leave requests found.</em></p>
+}
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Type</th>
-                <th>Approved</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var request in requests)
-            {
-                <tr>
-                    <td>@request.StartDate.ToShortDateString()</td>
-                    <td>@request.EndDate.ToShortDateString()</td>
-                    <td>@request.Type</td>
-                    <td>@(request.Approved ? "Yes" : "No")</td>
-
-                    <td>
-                        <button class="btn btn-primary" @onclick="() => ReviewLR(request.Id)">Review</button>
-                        <button class="btn btn-secondary" @onclick="() => DetailsLR(request.Id)">Details</button>
-                        <button class="btn btn-warning" @onclick="() => EditLR(request.Id)">Edit</button>
-                        <button class="btn btn-danger" @onclick="() => DeleteLR(request.Id)">Delete</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    @foreach (var request in requests)
+    {
+        <div class="card mb-3 p-3 shadow-sm border rounded-3">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>📅 @request.StartDate.ToShortDateString() - @request.EndDate.ToShortDateString()</strong><br />
+                    <span>📝 Type: @request.Type</span><br />
+                    <span>👤 Requested by: <strong>@($"{request.User.FirstName} {request.User.LastName}")</strong></span>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-info" @onclick="() => DetailsLR(request.Id)">Details</button>
+                    <button class="btn btn-success" @onclick="() => ApproveRequest(request.Id)">Approve</button>
+                    <button class="btn btn-danger" @onclick="() => DenyRequest(request.Id)">Deny</button>
+                </div>
+            </div>
+        </div>
+    }
 }
 
 @code {
@@ -59,45 +54,50 @@ else
 
     CancellationToken cancellationToken = new();
 
-    //TODO: fix the authentication context issue.
-    //OVERALL TODO: fix the automapper.
-
     protected override async Task OnInitializedAsync()
     {
-        var currentUser = authContext.CurrentUser;
-        if(currentUser is null)
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
         {
-            requests = Array.Empty<LeaveRequestViewModel>();
-            return;
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+
+                await LoadRequests();
+                return;
+            }
         }
+
+        Console.WriteLine("❌ Current user not found or not authenticated.");
+        requests = Array.Empty<LeaveRequestViewModel>();
+    }
+
+    private async Task LoadRequests()
+    {
         var all = await leaveRequestService.GetAllAsync(cancellationToken);
-        requests = all.Where(r => r.UserId == currentUser.Id).Select(r => mapper.Map<LeaveRequestViewModel>(r)).ToArray();
+        requests = all
+            .Select(r =>
+            {
+                var vm = mapper.Map<LeaveRequestViewModel>(r);
+                vm.User = r.User; // важно: потребителят да е Include-нат в сервиза
+                return vm;
+            })
+            .ToArray();
     }
 
-    private void NavigateToCreatePage()
+    private void DetailsLR(Guid id) => NavManager.NavigateTo($"/leaveRequests/details/{id}");
+
+    private async Task ApproveRequest(Guid id)
     {
-        NavManager.NavigateTo("/leaveRequests/create");
+        await leaveRequestService.ApproveAsync(id, cancellationToken);
+        await LoadRequests();
     }
 
-    private async Task ReviewLR(Guid LRId)
+    private async Task DenyRequest(Guid id)
     {
-        NavManager.NavigateTo($"/leaveRequests/review/{LRId}");
-    }
-
-    private async Task EditLR(Guid LRId)
-    {
-        NavManager.NavigateTo($"/leaveRequests/edit/{LRId}");
-    }
-    private async Task DetailsLR(Guid LRId)
-    {
-        NavManager.NavigateTo($"/leaveRequests/details/{LRId}");
-    }
-    private async Task DeleteLR(Guid LRId)
-    {
-        // Delete the team from the database
-        await leaveRequestService.SoftDeleteAsync(LRId, cancellationToken);
-        var all = await leaveRequestService.GetAllAsync(cancellationToken);
-        // Reload the list after deletion
-        requests = all.Select(r => mapper.Map<LeaveRequestViewModel>(r)).ToArray();
+        await leaveRequestService.DenyAsync(id, cancellationToken);
+        await LoadRequests();
     }
 }

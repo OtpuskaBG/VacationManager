@@ -1,4 +1,4 @@
-﻿using VacationManager.Data.Enums;
+﻿    using VacationManager.Data.Enums;
 using VacationManager.Data.Models;
 
 namespace VacationManager.Models.LeaveRequest

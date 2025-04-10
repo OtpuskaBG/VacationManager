@@ -10,5 +10,8 @@ namespace VacationManager.Core.Services.Abstractions
 {
     public interface ILeaveRequestService : IService<LeaveRequest, LeaveRequestPrototype>
     {
+        Task ApproveAsync(Guid id, CancellationToken cancellationToken = default);
+        Task DenyAsync(Guid id, CancellationToken cancellationToken = default);
+
     }
 }

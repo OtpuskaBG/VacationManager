@@ -3,8 +3,10 @@ using VacationManager.Core.Authentication.Abstractions;
 using VacationManager.Core.Authentication.Extensions;
 using VacationManager.Core.Prototypes;
 using VacationManager.Core.Services.Abstractions;
+using VacationManager.Data.Enums;
 using VacationManager.Data.Models;
 using VacationManager.Data.Repositories.Abstractions;
+
 
 namespace VacationManager.Core.Services
 {
@@ -14,6 +16,40 @@ namespace VacationManager.Core.Services
     ) : BaseService<LeaveRequest, LeaveRequestPrototype>(repository), ILeaveRequestService
     {
         private readonly IAuthenticationContext _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
+
+        public async Task ApproveAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var filters = new List<Expression<Func<LeaveRequest, bool>>>
+    {
+        r => r.Id == id
+    };
+
+            var request = await repository.GetAsync(filters, cancellationToken);
+            if (request == null)
+                throw new ArgumentException("Leave request not found");
+
+            request.Approved = true;
+
+            await repository.UpdateAsync(request, cancellationToken);
+        }
+
+        public async Task DenyAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var filters = new List<Expression<Func<LeaveRequest, bool>>>
+    {
+        r => r.Id == id
+    };
+
+            var request = await repository.GetAsync(filters, cancellationToken);
+            if (request == null)
+                throw new ArgumentException("Leave request not found");
+
+            request.Approved = false;
+
+            await repository.UpdateAsync(request, cancellationToken);
+        }
+
+
 
         protected override async Task ApplyAsync(LeaveRequest entity, LeaveRequestPrototype prototype, CancellationToken cancellationToken)
         {
@@ -26,11 +62,27 @@ namespace VacationManager.Core.Services
             entity.AttachmentPath = prototype.AttachmentPath;
             entity.Approved = prototype.Approved;
         }
+        public async Task<LeaveRequest[]> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            var filters = BuildAdditionalFilters();
+            return await repository.GetManyWithNavigationsAsync(
+                filters,
+                new[] { "User" },
+                cancellationToken
+            );
+        }
 
         protected override IEnumerable<Expression<Func<LeaveRequest, bool>>> BuildAdditionalFilters()
         {
             var currentUser = _authContext.GetCurrentUserRequired();
-            return [lr => lr.User == currentUser];
+
+            if (currentUser.Role is Role.CEO or Role.TeamLead)
+            {
+                return []; // няма филтри, виждат всичко
+            }
+
+            return [lr => lr.User == currentUser]; // само собствените заявки
         }
+
     }
 }
