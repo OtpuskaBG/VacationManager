@@ -44,7 +44,7 @@ builder.Services.AddAuthentication(options =>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString), ServiceLifetime.Scoped);
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
@@ -69,14 +69,15 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireCEORole", policy =>
-        policy.Requirements.Add(new HasRoleRequirement(Role.CEO)));
+        policy.Requirements.Add(new HasAnyRoleRequirement(Role.CEO)));
+    options.AddPolicy("RequireCEOOrTLRole", policy =>
+        policy.Requirements.Add(new HasAnyRoleRequirement(Role.TeamLead, Role.CEO)));
 });
 
-builder.Services.AddScoped<IAuthorizationHandler, HasRoleHandler>();
+//builder.Services.AddScoped<IAuthorizationHandler, HasRoleHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, HasAnyRoleHandler>();
 
 var app = builder.Build();
-
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -42,3 +42,39 @@ public class HasRoleRequirement : IAuthorizationRequirement
         RequiredRole = requiredRole;
     }
 }
+
+public class HasAnyRoleHandler : AuthorizationHandler<HasAnyRoleRequirement>
+{
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public HasAnyRoleHandler(UserManager<ApplicationUser> userManager)
+    {
+        _userManager = userManager;
+    }
+
+    protected override async Task HandleRequirementAsync(
+        AuthorizationHandlerContext context,
+        HasAnyRoleRequirement requirement)
+    {
+        var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return;
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return;
+
+        if (requirement.AllowedRoles.Contains(user.Role))
+        {
+            context.Succeed(requirement);
+        }
+    }
+}
+
+public class HasAnyRoleRequirement : IAuthorizationRequirement
+{
+    public Role[] AllowedRoles { get; }
+
+    public HasAnyRoleRequirement(params Role[] allowedRoles)
+    {
+        AllowedRoles = allowedRoles;
+    }
+}

@@ -12,6 +12,6 @@ namespace VacationManager.Core.Services.Abstractions
     {
         Task ApproveAsync(Guid id, CancellationToken cancellationToken = default);
         Task DenyAsync(Guid id, CancellationToken cancellationToken = default);
-
+        Task<List<LeaveRequest>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default);
     }
 }

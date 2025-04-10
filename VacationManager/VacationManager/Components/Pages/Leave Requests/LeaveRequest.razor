@@ -16,7 +16,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IHttpContextAccessor HttpContextAccessor
 
-
+@attribute [Authorize(Policy = "RequireCEOorTLRole")]
 <h3>Leave Request Details</h3>
 
 @if (leaveRequest == null)
@@ -73,14 +73,6 @@ else
             {
                 authContext.Authenticate(user);
             }
-            else
-            {
-                throw new UnauthorizedAccessException("User not found.");
-            }
-        }
-        else
-        {
-            throw new UnauthorizedAccessException("User is not authenticated.");
         }
         if (string.IsNullOrEmpty(LRId))
         {

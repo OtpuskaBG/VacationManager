@@ -1,0 +1,107 @@
+﻿@page "/Account/Manage/LeaveRequests"
+
+@using AutoMapper
+@using VacationManager.Data.Models
+@using VacationManager.Core.Services.Abstractions
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Data.Enums
+@using VacationManager.Models.LeaveRequest
+
+@inject ILeaveRequestService LeaveRequestService
+@inject IAuthenticationContext authContext
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IMapper mapper
+@inject NavigationManager Navigation
+
+@attribute [Authorize]
+
+<h3>My Leave Requests</h3>
+
+@if (leaveRequests == null)
+{
+    <p class="text-danger">No leave requests found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var request in leaveRequests)
+            {
+                var statusClass = request.ApprovalStatus switch
+                {
+                    ApprovalStatus.Approved => "approved-bg",
+                    ApprovalStatus.Denied => "denied-bg",
+                    _ => "pending-bg"
+                };
+
+                <tr class="@statusClass">
+                    <td>@request.User?.FirstName @request.User?.LastName</td>
+                    <td>@request.Type</td>
+                    <td>@request.StartDate.ToShortDateString()</td>
+                    <td>@request.EndDate.ToShortDateString()</td>
+                    <td>@(request.ApprovalStatus == ApprovalStatus.Approved ? "Approved" : request.ApprovalStatus == ApprovalStatus.Denied ? "Denied" : "Pending")</td>
+                    <td>
+                        <NavLink class="nav-link" href="@($"/leaveRequests/details/{request.Id}")">
+                            <button class="btn btn-primary">View Details</button>
+                        </NavLink>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<style>
+    .approved-bg {
+        background-color: #d4edda; /* light green */
+    }
+
+    .denied-bg {
+        background-color: #f8d7da; /* light red */
+    }
+
+    .pending-bg {
+        background-color: #fff3cd; /* light yellow */
+    }
+</style>
+
+@code {
+    private List<LeaveRequestViewModel> leaveRequests;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext?.User?.Identity?.IsAuthenticated == true)
+        {
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+                // Fetch the leave requests for the authenticated user
+                var data = await LeaveRequestService.GetByUserIdAsync(user.Id, default);
+                if (data == null || !data.Any())
+                {
+                    leaveRequests = null;
+                }
+                else
+                {
+                    // Map the data to view models
+                    leaveRequests = mapper.Map<List<LeaveRequestViewModel>>(data);
+                }
+            }
+        }
+    }
+}

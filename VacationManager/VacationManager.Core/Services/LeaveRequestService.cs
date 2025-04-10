@@ -76,6 +76,24 @@ namespace VacationManager.Core.Services
             );
         }
 
+        public async Task<List<LeaveRequest>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            // Add the current user's role-based filters (CEO or TeamLead can see all leave requests)
+            var filters = BuildAdditionalFilters().ToList();
+
+            // Add a filter for the user ID to fetch only leave requests for the specific user
+            filters.Add(lr => lr.User.Id == userId.ToString());
+
+            // Fetch leave requests for the given user with navigation for related entities like 'User'
+            var leaveRequests = await repository.GetManyWithNavigationsAsync(
+                filters,
+                new[] { "User" }, // Load related user data
+                cancellationToken
+            );
+
+            return leaveRequests.ToList(); // Return the list of leave requests
+        }
+
         
         public async Task<LeaveRequest[]> GetAllAsync(CancellationToken cancellationToken = default)
         {
