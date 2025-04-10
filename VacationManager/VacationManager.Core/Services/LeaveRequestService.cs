@@ -28,7 +28,7 @@ namespace VacationManager.Core.Services
             if (request == null)
                 throw new ArgumentException("Leave request not found");
 
-            request.Approved = true;
+            request.ApprovalStatus = ApprovalStatus.Approved;
 
             await repository.UpdateAsync(request, cancellationToken);
         }
@@ -44,7 +44,7 @@ namespace VacationManager.Core.Services
             if (request == null)
                 throw new ArgumentException("Leave request not found");
 
-            request.Approved = false;
+            request.ApprovalStatus = ApprovalStatus.Denied;
 
             await repository.UpdateAsync(request, cancellationToken);
         }
@@ -60,7 +60,7 @@ namespace VacationManager.Core.Services
             entity.HalfDay = prototype.HalfDay;
             entity.Type = prototype.Type;
             entity.AttachmentPath = prototype.AttachmentPath;
-            entity.Approved = prototype.Approved;
+            entity.ApprovalStatus = prototype.ApprovalStatus;
         }
         public async Task<LeaveRequest[]> GetAllAsync(CancellationToken cancellationToken = default)
         {

@@ -89,7 +89,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         var entity = await leaveRequestService.GetByIdAsync(leaveRequestId, cancellationToken);
-        if (entity == null || entity.Approved) leaveRequest = null;
+        if (entity == null || entity.ApprovalStatus == ApprovalStatus.Approved) leaveRequest = null;
         else leaveRequest = mapper.Map<LeaveRequestViewModel>(entity);
         isLoading = false;
     }

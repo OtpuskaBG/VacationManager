@@ -13,7 +13,7 @@ namespace VacationManager.Core.Prototypes
         public required DateTime EndDate { get; init; }
         public required DateTime RequestDate { get; init; }
         public bool HalfDay { get; init; }
-        public bool Approved { get; init; }
+        public ApprovalStatus ApprovalStatus { get; init; }
 
 
         public required LeaveType Type { get; init; }

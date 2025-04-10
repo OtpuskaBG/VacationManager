@@ -12,7 +12,7 @@ namespace VacationManager.Models.LeaveRequest
         public DateTime RequestDate { get; set; }
 
         public bool HalfDay { get; set; }
-        public bool Approved { get; set; }
+        public ApprovalStatus ApprovalStatus { get; set; }
         public LeaveType Type { get; set; }
 
         public string? AttachmentPath { get; set; }

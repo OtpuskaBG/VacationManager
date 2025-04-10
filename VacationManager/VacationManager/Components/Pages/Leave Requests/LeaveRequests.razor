@@ -7,6 +7,7 @@
 @using VacationManager.Core.Authentication.Abstractions
 @using VacationManager.Models.LeaveRequest
 @using Microsoft.AspNetCore.Identity
+@using VacationManager.Data.Enums
 
 @inject ILeaveRequestService leaveRequestService
 @inject IAuthenticationContext authContext
@@ -32,7 +33,13 @@ else
 {
     @foreach (var request in requests)
     {
-        <div class="card mb-3 p-3 shadow-sm border rounded-3">
+        var statusClass = request.ApprovalStatus switch
+        {
+            ApprovalStatus.Approved => "approved-bg",
+            ApprovalStatus.Denied => "denied-bg",
+            _ => ""
+        };
+        <div class="card mb-3 p-3 shadow-sm border rounded-3 @statusClass">
             <div class="d-flex justify-content-between">
                 <div>
                     <strong>📅 @request.StartDate.ToShortDateString() - @request.EndDate.ToShortDateString()</strong><br />
@@ -48,6 +55,17 @@ else
         </div>
     }
 }
+
+<style>
+    .approved-bg {
+        background-color: #d4edda; /* light green */
+    }
+
+    .denied-bg {
+        background-color: #f8d7da; /* light red */
+    }
+
+</style>
 
 @code {
     private LeaveRequestViewModel[] requests = [];
@@ -83,7 +101,7 @@ else
                 var vm = mapper.Map<LeaveRequestViewModel>(r);
                 vm.User = r.User; // важно: потребителят да е Include-нат в сервиза
                 return vm;
-            })
+            }).Where(r => r.StartDate > DateTime.Now)
             .ToArray();
     }
 

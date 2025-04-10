@@ -6,11 +6,16 @@
 @using VacationManager.Core.Authentication.Abstractions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
+@using VacationManager.Data.Enums
 @using VacationManager.Models.LeaveRequest
 
 @inject ILeaveRequestService LeaveRequestService
+@inject IAuthenticationContext authContext
 @inject IMapper Mapper
 @inject NavigationManager Navigation
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
+
 
 <h3>Leave Request Details</h3>
 
@@ -42,20 +47,32 @@ else
         <strong>Attachment:</strong> @(!string.IsNullOrWhiteSpace(leaveRequest.AttachmentPath) ? leaveRequest.AttachmentPath : "N/A")
     </div>
     <div class="mb-3">
-        <strong>Approved:</strong> @(leaveRequest.Approved ? "Yes" : "No")
+        <strong>Approval Status:</strong> @(leaveRequest.ApprovalStatus == ApprovalStatus.Approved ? "Approved" : leaveRequest.ApprovalStatus == ApprovalStatus.Denied ? "Denied" : "Pending")
     </div>
 
     <button class="btn btn-secondary" @onclick="NavigateBack">Back</button>
 }
 
 @code {
-    [Parameter] public Guid LRId { get; set; }
+    [Parameter] public string LRId { get; set; }
 
     private LeaveRequestViewModel? leaveRequest;
 
     protected override async Task OnInitializedAsync()
     {
-        var data = await LeaveRequestService.GetByIdAsync(LRId, default);
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+
+                return;
+            }
+        }
+        var data = await LeaveRequestService.GetByIdAsync(Guid.Parse(LRId), default);
         if (data != null)
         {
             leaveRequest = Mapper.Map<LeaveRequestViewModel>(data);
