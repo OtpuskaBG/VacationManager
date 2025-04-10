@@ -12,6 +12,7 @@ namespace VacationManager.Profiles
             //TODO: Further expand the mapper.
 
             this.CreateMap<LeaveRequest, LeaveRequestViewModel>();
+            this.CreateMap<LeaveRequestViewModel, LeaveRequest>();
             this.CreateMap<LeaveRequestPrototype, LeaveRequest>();
             this.CreateMap<LeaveRequest, LeaveRequestPrototype>();
             this.CreateMap<LeaveRequestViewModel, LeaveRequestPrototype>();

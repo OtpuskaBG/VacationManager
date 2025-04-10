@@ -17,7 +17,7 @@ namespace VacationManager.Models.LeaveRequest
 
         public string? AttachmentPath { get; set; }
 
-        public string? UserId { get; set; }
-        public ApplicationUser? User { get; set; }
+        public string UserId { get; set; }
+        public ApplicationUser User { get; set; }
     }
 }

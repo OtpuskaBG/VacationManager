@@ -62,6 +62,21 @@ namespace VacationManager.Core.Services
             entity.AttachmentPath = prototype.AttachmentPath;
             entity.ApprovalStatus = prototype.ApprovalStatus;
         }
+
+        public async Task<LeaveRequest?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var filters = BuildAdditionalFilters().ToList();
+
+            filters.Add(lr => lr.Id == id);
+
+            return await repository.GetWithNavigationsAsync(
+                filters,
+                new[] { "User" },
+                cancellationToken
+            );
+        }
+
+        
         public async Task<LeaveRequest[]> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var filters = BuildAdditionalFilters();
