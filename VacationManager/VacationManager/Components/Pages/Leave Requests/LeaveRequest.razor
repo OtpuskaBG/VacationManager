@@ -50,7 +50,12 @@ else
         <strong>Approval Status:</strong> @(leaveRequest.ApprovalStatus == ApprovalStatus.Approved ? "Approved" : leaveRequest.ApprovalStatus == ApprovalStatus.Denied ? "Denied" : "Pending")
     </div>
 
-    <button class="btn btn-secondary" @onclick="NavigateBack">Back</button>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="leaverequests">
+            <button class="btn btn-primary">Back</button>
+        </NavLink>
+    </div>
+
 }
 
 @code {
@@ -61,22 +66,38 @@ else
     protected override async Task OnInitializedAsync()
     {
         var httpContext = HttpContextAccessor.HttpContext;
-
-        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        if (httpContext?.User?.Identity?.IsAuthenticated == true)
         {
             var user = await UserManager.GetUserAsync(httpContext.User);
             if (user != null)
             {
                 authContext.Authenticate(user);
-
-                return;
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("User not found.");
             }
         }
+        else
+        {
+            throw new UnauthorizedAccessException("User is not authenticated.");
+        }
+        if (string.IsNullOrEmpty(LRId))
+        {
+            Navigation.NavigateTo("/leaveRequests");
+            return;
+        }
+
         var data = await LeaveRequestService.GetByIdAsync(Guid.Parse(LRId), default);
-        if (data != null)
+        if (data == null)
+        {
+            leaveRequest = null;
+        }
+        else
         {
             leaveRequest = Mapper.Map<LeaveRequestViewModel>(data);
         }
+
     }
 
     private void NavigateBack()

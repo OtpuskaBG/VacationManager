@@ -94,7 +94,7 @@
         }
 
         await leaveRequestService.CreateAsync(prototype, cancellationToken);
-        NavManager.NavigateTo("/leaveRequests");
+        NavManager.NavigateTo("/leaveRequestSent");
     }
 
     private async Task HandleFileUpload(InputFileChangeEventArgs e)
