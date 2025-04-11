@@ -1,0 +1,91 @@
+﻿@page "/projects/create"
+
+@using AutoMapper
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using VacationManager.Models.Project
+@using VacationManager.Data.Models
+@using VacationManager.Data.Enums
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Core.Prototypes
+
+@inject IProjectService projectService
+@inject ITeamService teamService
+@inject IUserService userService
+@inject IAuthenticationContext authContext
+@inject NavigationManager NavManager
+@inject IMapper mapper
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserManager<ApplicationUser> UserManager
+
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+<EditForm Model="Project" OnValidSubmit="OnCreateProject" FormName="CreateForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Project Name:</label>
+        <InputText @bind-Value="Project.Name" class="form-control" />
+        <ValidationMessage For="@(() => Project.Name)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description:</label>
+        <InputTextArea @bind-Value="Project.Description" class="form-control" />
+        <ValidationMessage For="@(() => Project.Description)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Assign Team:</label>
+        <InputSelect @bind-Value="Project.TeamId" class="form-select">
+            <option value="">-- Select Team --</option>
+            @foreach (var team in allTeams)
+            {
+                <option value="@team.Id">@team.Name</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => Project.TeamId)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Project</button>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm(FormName = "CreateForm")]
+    private ProjectViewModel Project { get; set; } = new();
+
+    private List<Team> allTeams = new();
+    private CancellationToken cancellationToken = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        allTeams = (await teamService.GetAllAsync(cancellationToken)).ToList();
+    }
+
+    private async Task OnCreateProject()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+                Project.UserId = user.Id;
+                Project.User = user;
+                Console.WriteLine($"✅ User set: {user.UserName}, Role: {user.Role}");
+            }
+        }
+
+        var projectEntity = mapper.Map<Project>(Project);
+        var projectPrototype = mapper.Map<ProjectPrototype>(projectEntity);
+        await projectService.CreateAsync(projectPrototype, cancellationToken);
+
+        NavManager.NavigateTo("/projects");
+    }
+}

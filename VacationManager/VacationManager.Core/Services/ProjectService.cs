@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using VacationManager.Core.Authentication.Abstractions;
 using VacationManager.Core.Authentication.Extensions;
 using VacationManager.Core.Prototypes;
 using VacationManager.Core.Services.Abstractions;
 using VacationManager.Data.Models;
+using VacationManager.Data.Models.Abstractions;
+using VacationManager.Data.Repositories;
 using VacationManager.Data.Repositories.Abstractions;
 
 namespace VacationManager.Core.Services
@@ -39,6 +42,11 @@ namespace VacationManager.Core.Services
                 entity.Teams.Add(existingTeam);
             }
         }
+
+
+
+
+
 
         protected override IEnumerable<Expression<Func<Project, bool>>> BuildAdditionalFilters()
         {
