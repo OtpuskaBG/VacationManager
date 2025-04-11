@@ -24,7 +24,7 @@ else
             <tr>
                 <th>Name</th>
                 <th>Description</th>
-                <th>Teams</th>
+                <!---<th>Teams</th>-->
                 <th>Actions</th>
             </tr>
         </thead>
@@ -34,13 +34,13 @@ else
                 <tr>
                     <td>@project.Name</td>
                     <td>@project.Description</td>
-                    <td>
+                   @* <td>
                         @foreach (var team in project.Teams)
                         {
                             @team.Name
                             <br />
                         }
-                    </td>
+                    </td>*@
                     <td>
                         <button class="btn btn-primary" @onclick="() => DetailsProject(project.Id)">Details</button>
                         <button class="btn btn-warning" @onclick="() => EditProject(project.Id)">Edit</button>
