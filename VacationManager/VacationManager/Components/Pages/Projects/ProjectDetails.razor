@@ -1,0 +1,101 @@
+﻿@page "/projects/{projectId}"
+@using VacationManager.Data.Models
+@using VacationManager.Core.Services.Abstractions
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Models.Team
+
+@inject IProjectService projectService
+@inject ITeamService teamService
+@inject NavigationManager NavManager
+
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize]
+
+<h3>Project Details</h3>
+
+@if (project == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="card p-4 shadow-sm rounded">
+        <h4>@project.Name</h4>
+        <p><strong>Description:</strong> @project.Description</p>
+
+        @if (project.Teams != null && project.Teams.Any())
+        {
+            <h5>Assigned Teams:</h5>
+            @foreach (var team in project.Teams)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6>@team.Name</h6>
+                        <p><strong>Team Lead:</strong> @team.TeamLead?.FirstName @team.TeamLead?.LastName</p>
+
+                        <h6>Developers:</h6>
+                        @if (team.Developers != null && team.Developers.Any())
+                        {
+                            <ul>
+                                @foreach (var dev in team.Developers)
+                                {
+                                    <li>@dev.FirstName @dev.LastName</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>No developers assigned to this team.</p>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>No teams assigned to this project.</p>
+        }
+
+        <button class="btn btn-secondary mt-3" @onclick="GoBack">Back</button>
+    </div>
+}
+
+@code {
+    [Parameter] public string projectId { get; set; }
+
+    private Project? project;
+
+    CancellationToken cancellationToken = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Guid.TryParse(projectId, out var projectGuid))
+        {
+            Console.WriteLine("❌ Invalid projectId in URL!");
+            return;
+        }
+
+        project = await projectService.GetByIdAsync(projectGuid, cancellationToken);
+
+        if (project == null)
+        {
+            Console.WriteLine($"❌ No project found with id {projectGuid}");
+            return;
+        }
+
+        // Ensure that each team associated with the project has its developers loaded
+        foreach (var team in project.Teams)
+        {
+            team.Developers = await teamService.GetDevelopersForTeamAsync(team.Id, cancellationToken);
+        }
+
+
+    }
+
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/projects");
+    }
+}
