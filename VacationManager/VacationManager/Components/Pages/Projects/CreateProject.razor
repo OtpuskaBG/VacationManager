@@ -39,7 +39,8 @@
         <ValidationMessage For="@(() => Project.Description)" />
     </div>
 
-    <div class="mb-3">
+    @*
+        <div class="mb-3">
         <label class="form-label">Assign Team:</label>
         <InputSelect @bind-Value="Project.TeamId" class="form-select">
             <option value="">-- Select Team --</option>
@@ -49,7 +50,8 @@
             }
         </InputSelect>
         <ValidationMessage For="@(() => Project.TeamId)" />
-    </div>
+    </div> 
+    *@
 
     <button type="submit" class="btn btn-primary">Create Project</button>
 </EditForm>
