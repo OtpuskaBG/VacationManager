@@ -30,6 +30,7 @@ else
                 <th>Name</th>
                 <th>Team Leader</th>
                 <th>Developers</th>
+                <th>Project</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -44,6 +45,16 @@ else
                         {
                             @developer.FirstName @developer.LastName
                             <br />
+                        }
+                    </td>
+                    <td>
+                        @if (team.Project != null)
+                        {
+                            @team.Project.Name
+                        }
+                        else
+                        {
+                            <span>No project assigned</span>
                         }
                     </td>
                     <td>

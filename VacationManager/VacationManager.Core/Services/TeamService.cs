@@ -10,6 +10,7 @@ using VacationManager.Core.Authentication.Abstractions;
 using VacationManager.Core.Authentication.Extensions;
 using VacationManager.Core.Prototypes;
 using VacationManager.Core.Services.Abstractions;
+using VacationManager.Data;
 using VacationManager.Data.Enums;
 using VacationManager.Data.Models;
 using VacationManager.Data.Repositories;
@@ -17,12 +18,13 @@ using VacationManager.Data.Repositories.Abstractions;
 
 namespace VacationManager.Core.Services
 {
-    public class TeamService(IRepository<Team> repository, IAuthenticationContext authContext, IUserService userService) : BaseService<Team, TeamPrototype>(repository), ITeamService
+    public class TeamService(IRepository<Team> repository, IAuthenticationContext authContext, IUserService userService, IDbContextFactory<ApplicationDbContext> dbContextFactory) : BaseService<Team, TeamPrototype>(repository), ITeamService
     {
         //private readonly ITeamService _teamService = teamService ?? throw new ArgumentNullException(nameof(teamService));
         //private readonly IProjectService _projectService = projectService ?? throw new ArgumentNullException(nameof(projectService));
         private readonly IAuthenticationContext _authContext = authContext ?? throw new ArgumentNullException(nameof(authContext));
         private readonly IUserService _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory = dbContextFactory ?? throw new ArgumentNullException(nameof(dbContextFactory));
         protected override Task<Team> InitializeAsync(TeamPrototype prototype, CancellationToken cancellationToken)
          => Task.FromResult(new Team());
 
@@ -48,22 +50,7 @@ namespace VacationManager.Core.Services
                 entity.TeamLead = teamLeadUser;
             }
 
-            //if (prototype.ProjectId.HasValue)
-            //{
-            //    Project project = await this._projectService.GetByIdRequiredAsync(prototype.ProjectId.Value, cancellationToken);
-
-            //    entity.ProjectId = project.Id;
-            //    entity.Project = project;
-            //}
-            //else
-            //{
-            //    entity.Project = null;
-            //    entity.ProjectId = default;
-            //}
-
-
-            //maybe users?
-
+            
             if (prototype.Developers != null)
             {
                 entity.Developers = new List<ApplicationUser>();
@@ -84,6 +71,7 @@ namespace VacationManager.Core.Services
                 entity.Developers = new List<ApplicationUser>();
             }
 
+            entity.ProjectId = prototype.ProjectId;
 
         }
         public async Task<Team[]> GetAllAsync(CancellationToken cancellationToken)
@@ -105,20 +93,13 @@ namespace VacationManager.Core.Services
         }
         public async Task<Team?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var includes = new[]
-            {
-                nameof(Team.Developers),
-                nameof(Team.TeamLead),
-                nameof(Team.Project),
-                nameof(Team.User)
-            };
+            using var context = dbContextFactory.CreateDbContext();
 
-            var filters = new Expression<Func<Team, bool>>[]
-            {
-                t => t.Id == id
-            };
-
-            return await repository.GetWithNavigationsAsync(filters, includes, cancellationToken);
+            return await context.Teams
+                .Include(t => t.Project)
+                .Include(t => t.TeamLead)
+                .Include(t => t.Developers)
+                .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
         }
         public async Task SoftDeleteAsync(Guid teamId, CancellationToken cancellationToken)
         {

@@ -7,7 +7,7 @@ namespace VacationManager.Models.Team
         public string Name { get; set; } = "";
 
 
-        //public Guid ProjectId { get; set; }
+        public Guid ProjectId { get; set; }
         public VacationManager.Data.Models.Project? Project { get; set; }
         public Guid Id { get; set; }
         public List<ApplicationUser> Developers { get; set; } = new();
