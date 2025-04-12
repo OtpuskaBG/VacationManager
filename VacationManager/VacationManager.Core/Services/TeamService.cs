@@ -154,6 +154,16 @@ namespace VacationManager.Core.Services
 
             return await repository.GetWithNavigationsAsync(filters, includes, cancellationToken);
         }
+        public async Task<List<ApplicationUser>> GetDevelopersForTeamAsync(Guid teamId, CancellationToken cancellationToken)
+        {
+            var includes = new[] { nameof(Team.Developers) }; // Include developers in the query
+            var filters = new Expression<Func<Team, bool>>[] { t => t.Id == teamId };
+    
+            var team = await repository.GetWithNavigationsAsync(filters, includes, cancellationToken);
+            return team?.Developers ?? new List<ApplicationUser>(); // Return developers if team exists
+        }
+
+
     }
 }
 
