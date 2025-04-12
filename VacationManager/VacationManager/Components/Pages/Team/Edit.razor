@@ -23,11 +23,17 @@
 
 @attribute [Authorize(Policy = "RequireCEORole")]
 
-<EditForm Model="Team" OnValidSubmit="UpdateTeam" FormName="EditForm">
+<EditForm Model="@Team" OnValidSubmit="UpdateTeam">
     <ChildContent Context="teamContext">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+
+
+        @if (!editTriggered)
+        {
+            <p class="text-danger">❗ UpdateTeam не е извикано.</p>
+        }
         <div>
             <label>Name:</label>
             <InputText @bind-Value="Team.Name" class="form-control" />
@@ -98,6 +104,16 @@
                 }
             </InputSelect>
         </div>
+        <div class="mb-3">
+            <label for="project" class="form-label">Assign to Project:</label>
+            <InputSelect @bind-Value="Team.ProjectId" id="project" class="form-select">
+                <option value="">-- Select Project --</option>
+                @foreach (var project in projects)
+                {
+                    <option value="@project.Id">@project.Name</option>
+                }
+            </InputSelect>
+        </div>
         <td>
             <div class="d-flex justify-content-between">
                 <button type="submit" class="btn btn-primary mt-3" style="margin:5px">Update Team</button>
@@ -117,6 +133,7 @@
     private List<ApplicationUser> selectedUsers = new();
     private bool isChecked;
     private List<ApplicationUser> availableUsers = new(); // unassigned потребители
+    private bool editTriggered = false;
 
 
     CancellationToken cancellationToken = new();
@@ -128,7 +145,7 @@
 
         var allUsers = await userService.GetAllAsync(cancellationToken);
         unassignedUsers = allUsers.Where(u => u.Role != Role.CEO).ToArray();
-
+        projects = (await projectService.GetAllAsync(cancellationToken)).ToArray();
         var existingTeam = await teamService.GetByIdAsync(Guid.Parse(teamId), cancellationToken);
         if (existingTeam != null)
         {
@@ -182,6 +199,14 @@
     }
     private async Task UpdateTeam()
     {
+        editTriggered = true;
+
+        Console.WriteLine("🚨 UpdateTeam() was called.");
+        Console.WriteLine($"ProjectId: {Team.ProjectId}");
+        Console.WriteLine($"TeamLeadId: {Team.TeamLeadId}");
+
+
+
         var httpContext = HttpContextAccessor.HttpContext;
 
         if (httpContext?.User?.Identity is { IsAuthenticated: true })
@@ -220,6 +245,10 @@
 
         Team.Developers = selectedUsers.ToList();
 
+        Console.WriteLine($"Selected Project ID: {Team.ProjectId}");
+
+
+        Console.WriteLine($"[DEBUG] Selected ProjectId: {Team.ProjectId}");
         var teamEntity = mapper.Map<VacationManager.Data.Models.Team>(Team);
         var teamPrototype = mapper.Map<TeamPrototype>(teamEntity);
 

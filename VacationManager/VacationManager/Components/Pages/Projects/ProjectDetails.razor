@@ -77,7 +77,7 @@ else
             return;
         }
 
-        project = await projectService.GetByIdAsync(projectGuid, cancellationToken);
+        project = await projectService.GetByIdAsync(Guid.Parse(projectId), cancellationToken);
 
         if (project == null)
         {
