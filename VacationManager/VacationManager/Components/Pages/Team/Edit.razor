@@ -1,0 +1,255 @@
+﻿@page "/teams/edit/{teamId}"
+
+@using AutoMapper
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Models.Team
+@using Microsoft.AspNetCore.Identity
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Core.Prototypes
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Enums
+@using VacationManager.Data.Models
+
+@inject ITeamService teamService
+@inject IProjectService projectService
+@inject IAuthenticationContext authContext
+@inject NavigationManager NavManager
+@inject IMapper mapper
+@inject IUserService userService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserManager<ApplicationUser> UserManager
+
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
+
+<EditForm Model="Team" OnValidSubmit="UpdateTeam" FormName="EditForm">
+    <ChildContent Context="teamContext">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label>Name:</label>
+            <InputText @bind-Value="Team.Name" class="form-control" />
+            <ValidationMessage For="@(() => Team.Name)" />
+        </div>
+        <h3>Current Developers</h3>
+        @if (selectedUsers.Any())
+        {
+            <div class="scrollable-list">
+
+                @foreach (var user in selectedUsers)
+                {
+                    <div class="col-md-3">
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h5 class="card-title">@user.FirstName @user.LastName</h5>
+                                <button class="btn btn-danger btn-sm" @onclick="() => RemoveDeveloper(user)" type="button">
+                                    <i class="bi bi-x-circle"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </div>
+        }
+        else
+        {
+            <p>No developers in this team.</p>
+        }
+
+        <hr />
+
+        <h3>Add Developers</h3>
+        @if (availableUsers.Any())
+        {
+            <div class="scrollable-list">
+
+                @foreach (var user in availableUsers)
+                {
+                    <div class="col-md-3">
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h5 class="card-title">@user.FirstName @user.LastName</h5>
+                                <button class="btn btn-success btn-sm" @onclick="async () => await AddDeveloper(user)" type="button">
+                                    <i class="bi bi-plus-circle"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </div>
+        }
+        else
+        {
+            <p>No available unassigned users.</p>
+        }
+
+
+        <div class="mb-3">
+            <label for="teamLeader" class="form-label">Choose Team Leader:</label>
+            <InputSelect @bind-Value="Team.TeamLeadId" id="teamLeader" class="form-select">
+                <option value="">-- Select Team Leader --</option>
+                @foreach (var developer in selectedUsers)
+                {
+                    <option value="@developer.Id">@developer.FirstName @developer.LastName</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label for="project" class="form-label">Assign to Project:</label>
+            <InputSelect @bind-Value="Team.ProjectId" id="project" class="form-select">
+                <option value="">-- Select Project --</option>
+                @foreach (var project in projects)
+                {
+                    <option value="@project.Id">@project.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <td>
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary mt-3" style="margin:5px">Update Team</button>
+                <button class="btn btn-secondary mt-3" @onclick="GoBack" type="button">Back</button>
+            </div>
+        </td>
+        <div class="footer-space"></div>
+    </ChildContent>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm(FormName = "TeamForm")]
+    private TeamViewModel Team { get; set; } = new();
+
+    private Project[] projects = [];
+    private ApplicationUser[] unassignedUsers = [];
+    private List<ApplicationUser> selectedUsers = new();
+    private bool isChecked;
+    private List<ApplicationUser> availableUsers = new(); // unassigned потребители
+    private bool editTriggered = false;
+
+
+    CancellationToken cancellationToken = new();
+
+    [Parameter] public string teamId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var allUsers = await userService.GetAllAsync(cancellationToken);
+        unassignedUsers = allUsers.Where(u => u.Role != Role.CEO).ToArray();
+        projects = (await projectService.GetAllAsync(cancellationToken)).ToArray();
+        var existingTeam = await teamService.GetByIdAsync(Guid.Parse(teamId), cancellationToken);
+        if (existingTeam != null)
+        {
+            Team = mapper.Map<TeamViewModel>(existingTeam);
+            selectedUsers = existingTeam.Developers.ToList();
+
+            var selectedIds = selectedUsers.Select(u => u.Id).ToHashSet();
+
+            availableUsers = allUsers
+                .Where(u => u.Role == Role.Unassigned && !selectedIds.Contains(u.Id))
+                .ToList();
+        }
+        Team = mapper.Map<TeamViewModel>(existingTeam);
+        Team.Id = existingTeam.Id;
+    }
+    //doesnt change the role in the database
+    //update not working
+    private async Task RemoveDeveloper(ApplicationUser user)
+    {
+        selectedUsers.Remove(user);
+        availableUsers.Add(user);
+        StateHasChanged();
+    }
+
+    private async Task AddDeveloper(ApplicationUser user)
+    {
+        availableUsers.Remove(user);
+        selectedUsers.Add(user);
+        StateHasChanged();
+    }
+
+    private void OnDeveloperChange(ApplicationUser user, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!selectedUsers.Contains(user))
+            {
+                selectedUsers.Add(user);
+            }
+        }
+        else
+        {
+            selectedUsers.Remove(user);
+        }
+
+        StateHasChanged();
+    }
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/teams");
+    }
+    private async Task UpdateTeam()
+    {
+
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var currentUser = await UserManager.GetUserAsync(httpContext.User);
+            if (currentUser != null)
+            {
+                authContext.Authenticate(currentUser);
+            }
+        }
+
+        if (!selectedUsers.Any())
+        {
+            await teamService.SoftDeleteAsync(Team.Id, cancellationToken);
+            NavManager.NavigateTo("/teams");
+            return;
+        }
+
+
+        foreach (var user in availableUsers)
+        {
+            await userService.ChangeRoleAsync(user, Role.Unassigned, cancellationToken);
+        }
+
+        foreach (var dev in selectedUsers)
+        {
+            var newRole = dev.Id == Team.TeamLeadId ? Role.TeamLead : Role.Developer;
+            await userService.ChangeRoleAsync(dev, newRole, cancellationToken);
+        }
+
+        Team.User = authContext.CurrentUser;
+        Team.UserId = Team.User.Id;
+
+        var teamLeader = selectedUsers.FirstOrDefault(u => u.Id == Team.TeamLeadId);
+        Team.TeamLead = teamLeader;
+
+        Team.Developers = selectedUsers.ToList();
+
+        Console.WriteLine($"Selected Project ID: {Team.ProjectId}");
+
+
+        Console.WriteLine($"[DEBUG] Selected ProjectId: {Team.ProjectId}");
+        var teamEntity = mapper.Map<VacationManager.Data.Models.Team>(Team);
+        var teamPrototype = mapper.Map<TeamPrototype>(teamEntity);
+
+        await teamService.UpdateAsync(Team.Id, teamPrototype, cancellationToken);
+
+        NavManager.NavigateTo("/teams");
+    }
+
+}

@@ -13,9 +13,5 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
-        builder.HasOne(u => u.Team)
-               .WithMany(t => t.Developers)
-               .HasForeignKey(u => u.TeamId)
-               .OnDelete(DeleteBehavior.SetNull);
     }
 }

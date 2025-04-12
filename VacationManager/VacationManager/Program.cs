@@ -1,3 +1,5 @@
+using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
@@ -6,11 +8,26 @@ using VacationManager.Components;
 using VacationManager.Components.Account;
 using VacationManager.Data;
 using VacationManager.Data.Models;
+using VacationManager.Data.Enums;
+using VacationManager.Data.Repositories;
+using VacationManager.Data.Repositories.Abstractions;
+using VacationManager.Profiles;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using VacationManager.Core.Authentication.Abstractions;
+using VacationManager.Core.Authentication;
+using VacationManager.Core.Services.Abstractions;
+using VacationManager.Core.Services;
+using VacationManager.Middleware;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents();
+//builder.Services.AddRazorComponents();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -26,8 +43,9 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
@@ -36,6 +54,29 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+Assembly currentAssembly = Assembly.GetExecutingAssembly();
+builder.Services.AddAutoMapper(currentAssembly);
+builder.Services.AddAutoMapper(typeof(TeamProfile));
+
+builder.Services.AddScoped<IAuthenticationContext, AuthenticationContext>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped(typeof(IIdentityRepository<>), typeof(IdentityRepository<>));
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireCEORole", policy =>
+        policy.Requirements.Add(new HasAnyRoleRequirement(Role.CEO)));
+    options.AddPolicy("RequireCEOOrTLRole", policy =>
+        policy.Requirements.Add(new HasAnyRoleRequirement(Role.TeamLead, Role.CEO)));
+});
+
+//builder.Services.AddScoped<IAuthorizationHandler, HasRoleHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, HasAnyRoleHandler>();
 
 var app = builder.Build();
 
@@ -52,11 +93,16 @@ else
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseMiddleware<AuthenticationContextSetupMiddleware>();
+
 app.UseAntiforgery();
 
-app.MapRazorComponents<App>();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();

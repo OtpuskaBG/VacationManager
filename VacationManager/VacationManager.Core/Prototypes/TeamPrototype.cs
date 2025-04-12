@@ -7,7 +7,7 @@ using VacationManager.Data.Models;
 
 namespace VacationManager.Core.Prototypes
 {
-    class TeamPrototype
+    public class TeamPrototype
     {
         public required string Name { get; init; }
 
@@ -17,5 +17,9 @@ namespace VacationManager.Core.Prototypes
 
 
         public List<ApplicationUser> Developers { get; init; } = [];
+
+
+        public string? TeamLeadId { get; set; }
+        public ApplicationUser? TeamLead { get; set; }
     }
 }

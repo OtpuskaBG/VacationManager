@@ -1,0 +1,126 @@
+﻿@page "/leaveRequests"
+
+@using AutoMapper
+@using VacationManager.Data.Models
+@using VacationManager.Core.Services.Abstractions
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Models.LeaveRequest
+@using Microsoft.AspNetCore.Identity
+@using VacationManager.Data.Enums
+
+@inject ILeaveRequestService leaveRequestService
+@inject IAuthenticationContext authContext
+@inject IMapper mapper
+@inject NavigationManager NavManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
+
+@rendermode RenderMode.InteractiveServer
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+<h3 class="mb-4">📋 All Leave Requests</h3>
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
+@if (requests == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (requests.Length == 0)
+{
+    <p><em>No leave requests found.</em></p>
+}
+else
+{
+    @foreach (var request in requests)
+    {
+        var statusClass = request.ApprovalStatus switch
+        {
+            ApprovalStatus.Approved => "approved-bg",
+            ApprovalStatus.Denied => "denied-bg",
+            _ => ""
+        };
+        <div class="card mb-3 p-3 shadow-sm border rounded-3 @statusClass">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>📅 @request.StartDate.ToShortDateString() - @request.EndDate.ToShortDateString()</strong><br />
+                    <span>📝 Type: @request.Type</span><br />
+                    <span>👤 Requested by: <strong>@($"{request.User.FirstName} {request.User.LastName}")</strong></span>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-info" @onclick="() => DetailsLR(request.Id)">Details</button>
+                    <button class="btn btn-success" @onclick="() => ApproveRequest(request.Id)">Approve</button>
+                    <button class="btn btn-danger" @onclick="() => DenyRequest(request.Id)">Deny</button>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<style>
+    .approved-bg {
+        background-color: #d4edda; /* light green */
+    }
+
+    .denied-bg {
+        background-color: #f8d7da; /* light red */
+    }
+
+</style>
+
+@code {
+    private LeaveRequestViewModel[] requests = [];
+
+    CancellationToken cancellationToken = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+
+                await LoadRequests();
+                return;
+            }
+        }
+
+        Console.WriteLine("❌ Current user not found or not authenticated.");
+        requests = Array.Empty<LeaveRequestViewModel>();
+    }
+
+    private async Task LoadRequests()
+    {
+        var all = await leaveRequestService.GetAllAsync(cancellationToken);
+        requests = all
+            .Select(r =>
+            {
+                var vm = mapper.Map<LeaveRequestViewModel>(r);
+                vm.User = r.User; // важно: потребителят да е Include-нат в сервиза
+                return vm;
+            }).Where(r => r.StartDate > DateTime.Now)
+            .ToArray();
+    }
+
+    private void DetailsLR(Guid id) => NavManager.NavigateTo($"/leaveRequests/details/{id}");
+
+    private async Task ApproveRequest(Guid id)
+    {
+        await leaveRequestService.ApproveAsync(id, cancellationToken);
+        await LoadRequests();
+    }
+
+    private async Task DenyRequest(Guid id)
+    {
+        await leaveRequestService.DenyAsync(id, cancellationToken);
+        await LoadRequests();
+    }
+}

@@ -1,0 +1,103 @@
+﻿@page "/teams/{teamId}"
+@using VacationManager.Data.Models
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Core.Authentication.Abstractions
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using VacationManager.Models.Team
+
+@inject ITeamService teamService
+@inject IProjectService projectService
+@inject IUserService userService
+@inject NavigationManager NavManager
+@inject IHttpContextAccessor HttpContextAccessor
+
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize]
+
+<h3>Team Details</h3>
+
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
+@if (team == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="card p-4 shadow-sm rounded">
+        <h4>@team.Name</h4>
+        <p><strong>Team Leader:</strong> @team.TeamLead?.FirstName @team.TeamLead?.LastName</p>
+
+        <h5>Developers:</h5>
+        @if (team.Developers != null && team.Developers.Any())
+        {
+            <ul>
+                @foreach (var dev in team.Developers)
+                {
+                    <li>@dev.FirstName @dev.LastName</li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No developers assigned.</p>
+        }
+
+        <h5>Projects:</h5>
+        @if (Projects.Any())
+        {
+            <ul>
+                @foreach (var project in Projects)
+                {
+                    <li>@project.Name</li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No projects assigned.</p>
+        }
+
+        <button class="btn btn-secondary mt-3" @onclick="GoBack">Back</button>
+    </div>
+}
+
+@code {
+    [Parameter] public string teamId { get; set; }
+
+    private VacationManager.Data.Models.Team? team;
+    private List<Project> Projects = new();
+
+    CancellationToken cancellationToken = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Guid.TryParse(teamId, out var teamGuid))
+        {
+            Console.WriteLine("❌ Invalid teamId in URL!");
+            return;
+        }
+
+        team = await teamService.GetByIdAsync(teamGuid, cancellationToken);
+
+        if (team == null)
+        {
+            Console.WriteLine($"❌ No team found with id {teamGuid}");
+            return;
+        }
+
+        var allProjects = await projectService.GetAllAsync(cancellationToken);
+        Projects = allProjects.Where(p => p.Teams.Any(t => t.Id == team.Id)).ToList();
+    }
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/teams");
+    }
+}

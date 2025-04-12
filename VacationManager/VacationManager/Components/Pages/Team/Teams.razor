@@ -1,0 +1,111 @@
+﻿@page "/teams"
+
+@using VacationManager.Data.Models
+@using VacationManager.Core.Services.Abstractions
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Models.Team
+
+
+@inject ITeamService teamService
+@inject IAuthenticationContext authContext
+@inject NavigationManager NavManager
+
+
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+<h3>Teams</h3>
+
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
+@if (teams == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Team Leader</th>
+                <th>Developers</th>
+                <th>Project</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var team in teams)
+            {
+                <tr>
+                    <td>@team.Name</td>
+                    <td>@team.TeamLead?.FirstName @team.TeamLead?.LastName</td>
+                    <td>
+                        @foreach (var developer in team.Developers)
+                        {
+                            @developer.FirstName @developer.LastName
+                            <br />
+                        }
+                    </td>
+                    <td>
+                        @if (team.Project != null)
+                        {
+                            @team.Project.Name
+                        }
+                        else
+                        {
+                            <span>No project assigned</span>
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => DetailsTeam(team.Id)">Details</button>
+                        <button class="btn btn-warning" @onclick="() => EditTeam(team.Id)">Edit</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteTeam(team.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<button class="btn btn-primary" @onclick="NavigateToCreatePage">Create New Team</button>
+
+@code {
+    private VacationManager.Data.Models.Team[] teams = [];
+    CancellationToken cancellationToken = new ();
+
+    protected override async Task OnInitializedAsync()
+    {
+        teams = await teamService.GetAllAsync(cancellationToken);
+        Console.WriteLine(string.Join(", ", teams.Select(t => t.Name)));
+    }
+
+    private void NavigateToCreatePage()
+    {
+        NavManager.NavigateTo("/teams/create");
+    }
+
+    private async Task EditTeam(Guid teamId)
+    {
+        NavManager.NavigateTo($"/teams/edit/{teamId}");
+    }
+    private async Task DetailsTeam(Guid teamId)
+    {
+        NavManager.NavigateTo($"/teams/{teamId}");
+    }
+    private async Task DeleteTeam(Guid teamId)
+    {
+        // Delete the team from the database
+        await teamService.SoftDeleteAsync(teamId, cancellationToken);
+        // Reload the list after deletion
+        teams = await teamService.GetAllAsync(cancellationToken);
+
+        
+    }
+}

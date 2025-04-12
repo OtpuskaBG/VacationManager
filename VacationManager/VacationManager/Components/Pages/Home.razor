@@ -1,7 +1,107 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - Vacation Manager</PageTitle>
 
-<h1>Hello, world!</h1>
+<style>
+    body {
+        background: url('/backgound.png') no-repeat center center fixed;
+        background-size: cover;
+        font-family: 'Madimi One', cursive;
+    }
 
-Welcome to your new app.
+    .container {
+        background-color: rgba(255, 255, 255, 0.6);
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        margin-top: 2rem;
+        border: 2px solid black;
+    }
+
+    .card {
+        border: 2px solid black;
+        border-radius: 10px;
+    }
+
+    h1, h2, h3, h4, h5, h6, p, .btn {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+
+    .jumbotron {
+        border: 2px solid black; /* 🆕 Black border around Vacation Manager section */
+        border-radius: 15px;
+    }
+
+</style>
+
+
+
+<div class="container">
+    <!-- Hero Section -->
+    <header class="jumbotron text-center bg-primary text-white mb-5">
+        <h1 class="display-4">Vacation Manager</h1>
+        <p class="lead">Efficiently manage your team and projects with ease. Keep track of vacations, projects, and team assignments all in one place.</p>
+        <p>
+            <NavLink class="btn btn-light btn-lg" href="/projects">Get Started</NavLink>
+        </p>
+        <p class="lead" style="color: #007bff;">.</p>
+    </header>
+
+    <!-- Features Section -->
+    <section>
+        <h2 class="text-center text-primary mb-5">Key Features</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fa fa-users fa-3x mb-3" style="color: #007bff;"></i>
+                        <h5 class="card-title">Team Management</h5>
+                        <p class="card-text">Easily manage your teams, assign leaders, and track members' progress. Build collaborative teams for your projects.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fa fa-project-diagram fa-3x mb-3" style="color: #28a745;"></i>
+                        <h5 class="card-title">Project Creation</h5>
+                        <p class="card-text">Create, assign, and monitor projects in real time. Keep your team's tasks and deadlines on track with ease.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fa fa-user-shield fa-3x mb-3" style="color: #ffc107;"></i>
+                        <h5 class="card-title">Role-Based Access</h5>
+                        <p class="card-text">Ensure the right people have the right access. Only CEOs can manage teams, and employees can focus on projects.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What We Do Section -->
+    <section class="my-5">
+        <h2 class="text-center text-primary mb-4">What is Vacation Manager?</h2>
+        <p class="text-center">Vacation Manager is a web application that allows companies to effectively manage projects and track employee vacations. By allowing seamless integration between teams, projects, and vacations, this platform ensures that all your resources are optimally managed.</p>
+        <p class="text-center">Whether you're a CEO, team lead, or an employee, you can take advantage of our role-based access control, intuitive project management features, and team collaboration tools to keep your business running smoothly.</p>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="text-center mb-5">
+        <h3 class="text-primary">Ready to Get Started?</h3>
+        <p>Start by creating your first project or team to begin managing your company’s vacation schedule and workload effectively.</p>
+        <NavLink class="btn btn-primary btn-lg" href="/projects">Create a New Project</NavLink>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="text-center py-4">
+        <p>&copy; 2025 Vacation Manager. All rights reserved.</p>
+    </footer>
+</div>
+
+@code {
+    // This section can hold any code needed to fetch data or dynamically load items for the homepage.
+}

@@ -1,0 +1,60 @@
+﻿@page "/Account/Manage/MyTeam"
+@using VacationManager.Core.Services
+@using VacationManager.Data.Models
+@using VacationManager.Core.Services.Abstractions
+@using Microsoft.AspNetCore.Identity
+
+@inject ITeamService teamService
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
+
+<h3>My Team</h3>
+
+@if (userTeam != null)
+{
+    <div>
+        <h4>Team: @userTeam.Name</h4>
+        <p>Role: @userTeam.Role</p>
+    </div>
+}
+else
+{
+    <p>You are currently unassigned to any team.</p>
+}
+
+@code {
+    private UserTeam userTeam;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
+
+        if (currentUser != null)
+        {
+            // Ensure sequential async calls by awaiting GetUserTeamAsync after UserManager
+            userTeam = await GetUserTeamAsync(currentUser);
+        }
+    }
+
+    private async Task<UserTeam> GetUserTeamAsync(ApplicationUser user)
+    {
+        var team = await teamService.GetTeamByUserIdAsync(user.Id, default);
+
+        if (team != null)
+        {
+            var role = team.Developers.FirstOrDefault(d => d.Id == user.Id)?.Role.ToString() ?? "No Role";
+            return new UserTeam
+            {
+                Name = team.Name,
+                Role = role
+            };
+        }
+        return null;
+    }
+
+    public class UserTeam
+    {
+        public string Name { get; set; }
+        public string Role { get; set; }
+    }
+}

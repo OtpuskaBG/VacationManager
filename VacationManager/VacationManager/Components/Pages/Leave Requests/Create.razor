@@ -1,0 +1,109 @@
+﻿@page "/leaveRequests/create"
+
+@using AutoMapper
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Models.LeaveRequest
+@using Microsoft.AspNetCore.Identity;
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Core.Prototypes
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Enums
+@using VacationManager.Data.Models
+@inject IHttpContextAccessor HttpContextAccessor
+
+@inject ILeaveRequestService leaveRequestService
+@inject NavigationManager NavManager
+@inject IMapper mapper
+@inject UserManager<ApplicationUser> UserManager
+@inject IAuthenticationContext authContext
+
+@rendermode RenderMode.InteractiveServer
+
+<h3>Create Leave Request</h3>
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
+<EditForm Model="leaveRequest" OnValidSubmit="CreateRequest">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Start Date:</label>
+        <InputDate @bind-Value="leaveRequest.StartDate" class="form-control" />
+    </div>
+
+    <div>
+        <label>End Date:</label>
+        <InputDate @bind-Value="leaveRequest.EndDate" class="form-control" />
+    </div>
+
+    <div>
+        <label>Half-Day:</label>
+        <InputCheckbox @bind-Value="leaveRequest.HalfDay" /> Half Day<br />
+    </div>
+
+    <div>
+        <label>Request Type:</label>
+        <InputSelect @bind-Value="leaveRequest.Type">
+            <option value="Paid">Paid</option>
+            <option value="Unpaid">Unpaid</option>
+            <option value="Sick">Sick</option>
+        </InputSelect>
+    </div>
+
+    @*TODO: Make it so that the "Attachment" prompt is only visable when the request type is "Sick".*@
+
+    <div>
+        <label>Attachment (Only for Sick Leave):</label>
+        <InputFile OnChange="HandleFileUpload" />
+    </div>
+    <button type="submit" class="btn btn-primary mt-4">Create Request</button>
+</EditForm>
+
+@code {
+    private LeaveRequestViewModel leaveRequest = new();
+
+    CancellationToken cancellationToken = new();
+
+    private async Task CreateRequest()
+    {
+        var prototype = mapper.Map<LeaveRequestPrototype>(leaveRequest);
+
+        // Взимаме текущия контекст
+        var httpContext = HttpContextAccessor.HttpContext;
+
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var user = await UserManager.GetUserAsync(httpContext.User);
+            if (user != null)
+            {
+                authContext.Authenticate(user);
+
+                prototype.UserId = user.Id;
+
+                Console.WriteLine($"✅ User set: {user.UserName}, Role: {user.Role}");
+            }
+            else
+            {
+                Console.WriteLine("❌ current user not found");
+                return;
+            }
+        }
+        else
+        {
+            Console.WriteLine("❌ ho user has logged in");
+            return;
+        }
+
+        await leaveRequestService.CreateAsync(prototype, cancellationToken);
+        NavManager.NavigateTo("/leaveRequestSent");
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        // handle file logic
+    }
+}

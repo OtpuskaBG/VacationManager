@@ -155,6 +155,21 @@ namespace VacationManager.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("TeamDevelopers", b =>
+                {
+                    b.Property<string>("DeveloperId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("DeveloperId", "TeamId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("TeamDevelopers", (string)null);
+                });
+
             modelBuilder.Entity("VacationManager.Data.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -211,9 +226,6 @@ namespace VacationManager.Data.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("TeamId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -231,8 +243,6 @@ namespace VacationManager.Data.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.HasIndex("TeamId");
-
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
@@ -242,8 +252,8 @@ namespace VacationManager.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("Approved")
-                        .HasColumnType("bit");
+                    b.Property<int>("ApprovalStatus")
+                        .HasColumnType("int");
 
                     b.Property<string>("AttachmentPath")
                         .HasColumnType("nvarchar(max)");
@@ -334,8 +344,11 @@ namespace VacationManager.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("ProjectId")
+                    b.Property<Guid?>("ProjectId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TeamLeadId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
@@ -343,6 +356,8 @@ namespace VacationManager.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("TeamLeadId");
 
                     b.HasIndex("UserId");
 
@@ -400,14 +415,19 @@ namespace VacationManager.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("VacationManager.Data.Models.ApplicationUser", b =>
+            modelBuilder.Entity("TeamDevelopers", b =>
                 {
-                    b.HasOne("VacationManager.Data.Models.Team", "Team")
-                        .WithMany("Developers")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                    b.HasOne("VacationManager.Data.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("DeveloperId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Team");
+                    b.HasOne("VacationManager.Data.Models.Team", null)
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VacationManager.Data.Models.LeaveRequest", b =>
@@ -434,15 +454,21 @@ namespace VacationManager.Data.Migrations
                     b.HasOne("VacationManager.Data.Models.Project", "Project")
                         .WithMany("Teams")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("VacationManager.Data.Models.ApplicationUser", "TeamLead")
+                        .WithMany()
+                        .HasForeignKey("TeamLeadId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("VacationManager.Data.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Project");
+
+                    b.Navigation("TeamLead");
 
                     b.Navigation("User");
                 });
@@ -455,11 +481,6 @@ namespace VacationManager.Data.Migrations
             modelBuilder.Entity("VacationManager.Data.Models.Project", b =>
                 {
                     b.Navigation("Teams");
-                });
-
-            modelBuilder.Entity("VacationManager.Data.Models.Team", b =>
-                {
-                    b.Navigation("Developers");
                 });
 #pragma warning restore 612, 618
         }

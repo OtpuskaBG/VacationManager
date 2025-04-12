@@ -1,0 +1,115 @@
+﻿@page "/projects/edit/{projectId}"
+
+@using AutoMapper
+@using Microsoft.AspNetCore.Authorization
+@using VacationManager.Models.Project
+@using Microsoft.AspNetCore.Identity
+@using VacationManager.Core.Authentication.Abstractions
+@using VacationManager.Core.Prototypes
+@using VacationManager.Core.Services.Abstractions
+@using VacationManager.Data.Enums
+@using VacationManager.Data.Models
+
+@inject IProjectService projectService
+@inject ITeamService teamService
+@inject IAuthenticationContext authContext
+@inject NavigationManager NavManager
+@inject IMapper mapper
+@inject IUserService userService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserManager<ApplicationUser> UserManager
+
+@rendermode RenderMode.InteractiveServer
+
+@attribute [Authorize(Policy = "RequireCEORole")]
+
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
+<EditForm Model="Project" OnValidSubmit="UpdateProject" FormName="EditProjectForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Name:</label>
+        <InputText @bind-Value="Project.Name" class="form-control" />
+        <ValidationMessage For="@(() => Project.Name)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="description" class="form-label">Description:</label>
+        <InputTextArea @bind-Value="Project.Description" id="description" class="form-control" />
+    </div>
+
+    @*
+     <div class="mb-3">
+        <label for="teamSelect">Assign Team:</label>
+        <InputSelect @bind-Value="Project.TeamId" id="teamSelect" class="form-select">
+            <option value="">-- Select Team --</option>
+            @foreach (var team in availableTeams)
+            {
+                <option value="@team.Id">@team.Name</option>
+            }
+        </InputSelect>
+    </div>
+    *@
+
+    <div class="d-flex justify-content-between">
+        <button type="submit" class="btn btn-primary">Update Project</button>
+        <button type="button" class="btn btn-secondary" @onclick="GoBack">Back</button>
+    </div>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm(FormName = "ProjectForm")]
+    private ProjectViewModel Project { get; set; } = new();
+
+    [Parameter] public string projectId { get; set; }
+
+    private List<Team> availableTeams = new();
+    CancellationToken cancellationToken = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var teams = await teamService.GetAllAsync(cancellationToken);
+        availableTeams = teams.ToList();
+
+        var existingProject = await projectService.GetByIdAsync(Guid.Parse(projectId), cancellationToken);
+        if (existingProject != null)
+        {
+            Project = mapper.Map<ProjectViewModel>(existingProject);
+            Project.Id = existingProject.Id;
+        }
+    }
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/projects");
+    }
+
+    private async Task UpdateProject()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext?.User?.Identity is { IsAuthenticated: true })
+        {
+            var currentUser = await UserManager.GetUserAsync(httpContext.User);
+            if (currentUser != null)
+            {
+                authContext.Authenticate(currentUser);
+            }
+        }
+
+        Project.User = authContext.CurrentUser;
+        Project.UserId = Project.User.Id;
+
+        var projectEntity = mapper.Map<VacationManager.Data.Models.Project>(Project);
+        var projectPrototype = mapper.Map<ProjectPrototype>(projectEntity);
+
+        await projectService.UpdateAsync(Project.Id, projectPrototype, cancellationToken);
+
+        NavManager.NavigateTo("/projects");
+    }
+}
