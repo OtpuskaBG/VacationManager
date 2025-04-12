@@ -23,6 +23,13 @@
 
 @attribute [Authorize(Policy = "RequireCEORole")]
 
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
+
 <EditForm Model="Team" OnValidSubmit="CreateTeam" FormName="CreateForm">
     <ChildContent Context="teamContext">
         <DataAnnotationsValidator />

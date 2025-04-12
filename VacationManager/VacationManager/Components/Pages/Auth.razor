@@ -1,13 +1,22 @@
 ﻿@page "/auth"
-
 @using Microsoft.AspNetCore.Authorization
-
 @attribute [Authorize]
 
 <PageTitle>Auth</PageTitle>
+
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
 
 <h1>You are authenticated</h1>
 
 <AuthorizeView>
     Hello @context.User.Identity?.Name!
 </AuthorizeView>
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <!-- Your navbar content here -->
+</div>

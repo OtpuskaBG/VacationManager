@@ -20,7 +20,12 @@
 @attribute [Authorize(Policy = "RequireCEORole")]
 
 <h3 class="mb-4">📋 All Leave Requests</h3>
-
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
 @if (requests == null)
 {
     <p><em>Loading...</em></p>

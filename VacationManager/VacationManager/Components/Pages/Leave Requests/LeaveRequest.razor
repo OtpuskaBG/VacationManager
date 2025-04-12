@@ -18,7 +18,12 @@
 
 @attribute [Authorize(Policy = "RequireCEOorTLRole")]
 <h3>Leave Request Details</h3>
-
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
 @if (leaveRequest == null)
 {
     <p class="text-danger">Request not found.</p>

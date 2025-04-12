@@ -20,7 +20,12 @@
 @rendermode RenderMode.InteractiveServer
 
 <h3>Create Leave Request</h3>
-
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
 <EditForm Model="leaveRequest" OnValidSubmit="CreateRequest">
     <DataAnnotationsValidator />
     <ValidationSummary />

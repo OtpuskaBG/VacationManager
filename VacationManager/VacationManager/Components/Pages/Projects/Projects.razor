@@ -12,7 +12,12 @@
 @attribute [Authorize(Policy = "RequireCEORole")]
 
 <h3>Projects</h3>
-
+<style>
+    body, h1, div, span, p, a, button {
+        font-family: 'Madimi One', cursive;
+        font-weight: bold;
+    }
+</style>
 @if (projects == null)
 {
     <p>Loading...</p>
