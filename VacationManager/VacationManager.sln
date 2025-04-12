@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VacationManager.Data", "Vac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VacationManager.Core", "VacationManager.Core\VacationManager.Core.csproj", "{1EE1A41F-7F8D-4562-96EA-2E986A0E0A0C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VacationManager.Test", "VacationManager.Test\VacationManager.Test.csproj", "{46B10639-B68D-4096-9410-38FF93E689C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{1EE1A41F-7F8D-4562-96EA-2E986A0E0A0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1EE1A41F-7F8D-4562-96EA-2E986A0E0A0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1EE1A41F-7F8D-4562-96EA-2E986A0E0A0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46B10639-B68D-4096-9410-38FF93E689C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46B10639-B68D-4096-9410-38FF93E689C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46B10639-B68D-4096-9410-38FF93E689C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46B10639-B68D-4096-9410-38FF93E689C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
