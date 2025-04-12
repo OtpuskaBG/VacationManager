@@ -49,3 +49,49 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+.nav-font-orbitron {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.nav-font-playfair {
+    font-family: 'Playfair Display', serif;
+}
+
+.nav-font-doodle {
+    font-family: 'Rubik Doodle Shadow', cursive;
+}
+
+.nav-font-code {
+    font-family: 'Fira Code', monospace;
+}
+
+/* Icon animation + nav hover styles */
+.nav-link {
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+    .nav-link:hover {
+        color: #fff;
+        text-shadow: 0 0 8px #00ffff, 0 0 12px #00ffff;
+    }
+
+    .nav-link span[class*='bi-'] {
+        margin-right: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .nav-link:hover span[class*='bi-'] {
+        transform: rotate(10deg) scale(1.2);
+    }
+
+/* Sidebar scrollable area */
+.nav-scrollable {
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
+}
+
+/* Optional: glowing navbar title */
+.navbar-brand.nav-font-doodle {
+    text-shadow: 0 0 3px #fff, 0 0 5px #00f2ff, 0 0 8px #00d0ff;
+}
