@@ -28,12 +28,6 @@
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-
-
-        @if (!editTriggered)
-        {
-            <p class="text-danger">❗ UpdateTeam не е извикано.</p>
-        }
         <div>
             <label>Name:</label>
             <InputText @bind-Value="Team.Name" class="form-control" />
@@ -199,13 +193,6 @@
     }
     private async Task UpdateTeam()
     {
-        editTriggered = true;
-
-        Console.WriteLine("🚨 UpdateTeam() was called.");
-        Console.WriteLine($"ProjectId: {Team.ProjectId}");
-        Console.WriteLine($"TeamLeadId: {Team.TeamLeadId}");
-
-
 
         var httpContext = HttpContextAccessor.HttpContext;
 

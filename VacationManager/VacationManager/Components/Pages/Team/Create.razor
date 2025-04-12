@@ -24,46 +24,56 @@
 @attribute [Authorize(Policy = "RequireCEORole")]
 
 <EditForm Model="Team" OnValidSubmit="CreateTeam" FormName="CreateForm">
-        <ChildContent Context="teamContext">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+    <ChildContent Context="teamContext">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-            <div>
-                <label>Name:</label>
-                <InputText @bind-Value="Team.Name" class="form-control" />
-                <ValidationMessage For="@(() => Team.Name)" />
-            </div>
+        <div>
+            <label>Name:</label>
+            <InputText @bind-Value="Team.Name" class="form-control" />
+            <ValidationMessage For="@(() => Team.Name)" />
+        </div>
 
-            <div class="mb-3">
-                <label class="form-label">Choose Developers:</label>
-                @foreach (var user in unassignedUsers)
+        <div class="mb-3">
+            <label class="form-label">Choose Developers:</label>
+            @foreach (var user in unassignedUsers)
+            {
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="dev_@user.Id"
+                           value="@user.Id"
+                           checked="@selectedUsers.Contains(user)"
+                           @onchange="(e) => OnDeveloperChange(user, (bool)e.Value)" />
+                    <label class="form-check-label" for="dev_@user.Id">@user.FirstName @user.LastName</label>
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label for="teamLeader" class="form-label">Choose Team Leader:</label>
+            <InputSelect @bind-Value="Team.TeamLeadId" id="teamLeader" class="form-select">
+                <option value="">-- Select Team Leader --</option>
+                @foreach (var developer in selectedUsers)
                 {
-                    <div class="form-check">
-                        <input class="form-check-input"
-                        type="checkbox"
-                        id="dev_@user.Id"
-                        value="@user.Id"
-                        checked="@selectedUsers.Contains(user)"
-                        @onchange="(e) => OnDeveloperChange(user, (bool)e.Value)" />
-                        <label class="form-check-label" for="dev_@user.Id">@user.FirstName @user.LastName</label>
-                    </div>
+                    <option value="@developer.Id">@developer.FirstName @developer.LastName</option>
                 }
-            </div>
-
-            <div class="mb-3">
-                <label for="teamLeader" class="form-label">Choose Team Leader:</label>
-                <InputSelect @bind-Value="Team.TeamLeadId" id="teamLeader" class="form-select">
-                    <option value="">-- Select Team Leader --</option>
-                    @foreach (var developer in selectedUsers)
-                    {
-                        <option value="@developer.Id">@developer.FirstName @developer.LastName</option>
-                    }
-                </InputSelect>
-            </div>
-
-            <button type="submit" class="btn btn-primary mt-4">Create Team</button>
-        </ChildContent>
-    </EditForm>
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label for="projectSelect" class="form-label">Select Project:</label>
+            <InputSelect @bind-Value="Team.ProjectId" id="projectSelect" class="form-select">
+                <option value="">-- Select Project --</option>
+                @foreach (var project in projects)
+                {
+                    <option value="@project.Id">@project.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => Team.ProjectId)" />
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">Create Team</button>
+    </ChildContent>
+</EditForm>
 
 
 @code {
@@ -83,20 +93,21 @@
     {
         var allUsers = await userService.GetAllAsync(cancellationToken);
         unassignedUsers = allUsers.Where(u => u.Role == Role.Unassigned).ToArray();
+        projects = await projectService.GetAllAsync(cancellationToken);
     }
     protected override async Task OnParametersSetAsync()
     {
-            if (Team.TeamLead != null)
+        if (Team.TeamLead != null)
+        {
+            var teamLeader = unassignedUsers.FirstOrDefault(u => u.Id == Team.TeamLead.Id);
+            if (teamLeader != null)
             {
-                var teamLeader = unassignedUsers.FirstOrDefault(u => u.Id == Team.TeamLead.Id);
-                if (teamLeader != null)
-                {
-                    selectedUsers.Add(teamLeader);
-                    unassignedUsers = unassignedUsers.Where(u => u.Id != Team.TeamLead.Id).ToArray();
-                }
+                selectedUsers.Add(teamLeader);
+                unassignedUsers = unassignedUsers.Where(u => u.Id != Team.TeamLead.Id).ToArray();
             }
+        }
     }
-    
+
     private void OnDeveloperChange(ApplicationUser user, bool isChecked)
     {
         if (isChecked)
@@ -112,7 +123,7 @@
             selectedUsers.Remove(user);
             Console.WriteLine("removed");
         }
-        
+
         StateHasChanged();
 
     }
@@ -130,7 +141,7 @@
                 Console.WriteLine($"✅ User set: {user.UserName}, Role: {user.Role}");
             }
         }
-        
+
 
         // Set the roles for all selected users to Developer
         foreach (var user in selectedUsers)
@@ -153,6 +164,7 @@
         Team.User = authContext.CurrentUser;
         Team.UserId = Team.User.Id;
         // Create the team
+
         var teamEntity = mapper.Map<VacationManager.Data.Models.Team>(Team);
         var teamPrototypeEntity = mapper.Map<TeamPrototype>(teamEntity);
 
