@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1220">
+  <meta name="description" content="VacationManager is an early-stage open-source ASP.NET Core and Blazor project for leave requests, teams, and project management.">
+  <meta property="og:title" content="VacationManager — Clearer leave, calmer teams">
+  <meta property="og:description" content="An early-stage project making time-off requests, team organization and project administration simpler.">
+  <meta property="og:type" content="website">
+  <title>VacationManager — Clearer leave, calmer teams</title>
+  <style>
+    :root { color-scheme: dark; --bg:#08101c; --surface:#0e192a; --line:#233249; --muted:#96a6bb; --ink:#ecf4ff; --aqua:#6be2c2; --blue:#76aaff; --purple:#b39aff; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: radial-gradient(ellipse 85% 48% at 78% -9%, rgba(51,94,153,.24), transparent 68%), var(--bg); font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.55; color: var(--ink); }
+    a { color: inherit; text-decoration: none; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a:focus-visible { outline: 2px solid var(--aqua); outline-offset: 5px; }
+    .wrap { max-width: 1152px; margin: 0 auto; padding: 0 28px; }
+    .nav { height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid rgba(157,185,222,.10); }
+    .brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 750; font-size: 19px; letter-spacing: -.035em; white-space: nowrap; }
+    .brand-icon { width: 33px; height: 33px; display:grid; place-items:center; background: linear-gradient(140deg, #65e8c3, #71a6ff); color: #06101a; border-radius: 10px; box-shadow: 0 7px 28px rgba(87,216,193,.20); }
+    .brand-icon svg { width: 21px; height: 21px; }
+    .nav-right { display: flex; align-items: center; gap: 30px; color: #c5d2e3; font-size: 14px; }
+    .nav-right a:hover { color: var(--aqua); }
+    .nav-cta { border: 1px solid #34506b; padding: 9px 14px; border-radius: 9px; background: rgba(108,152,216,.10); color: #eff7ff; }
+    .hero { display: grid; grid-template-columns: 1fr 1.06fr; align-items: center; gap: 48px; padding-top: 102px; padding-bottom: 117px; }
+    .eyebrow { display: inline-flex; gap: 9px; align-items: center; font-size: 12px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: var(--aqua); }
+    .eyebrow:before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--aqua); box-shadow: 0 0 14px rgba(107,226,194,.65); }
+    h1 { font-size: clamp(42px, 5.1vw, 72px); line-height: 1.07; letter-spacing: -.067em; margin: 22px 0 20px; max-width: 650px; font-weight: 790; }
+    .accent { background: linear-gradient(105deg, #78ecce 0%, #89c3ff 75%, #bca5ff); background-clip: text; -webkit-background-clip: text; color: transparent; }
+    .hero p { color: #b0c0d2; font-size: 17px; line-height: 1.82; max-width: 510px; margin: 0 0 28px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn { display: inline-flex; gap: 9px; align-items: center; justify-content: center; padding: 13px 19px; font-weight: 700; border-radius: 10px; font-size: 14px; transition: transform .2s ease, background .2s ease; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { color: #08151a; background: linear-gradient(115deg, #71e6c1, #9bc9ff); box-shadow: 0 10px 35px rgba(81,183,194,.16); }
+    .btn-secondary { color: #ddeafb; border: 1px solid #35465b; background: #101d2d; }
+    .footnote { margin-top: 21px; font-size: 12px; color: #8799b0; }
+    .screen { background: #0d1725; border: 1px solid #324559; border-radius: 17px; padding: 15px; transform: rotate(-1deg); box-shadow: 0 40px 95px rgba(0,0,0,.3), 0 0 90px rgba(99,171,213,.065); position: relative; min-width: 0; }
+    .screen:after { content:""; z-index: -1; position:absolute; inset: 45px 20px -22px; border-radius: 36px; background: rgba(103,185,203,.09); filter: blur(46px); }
+    .window-top { display:flex; align-items:center; justify-content: space-between; color:#8296af; font-size: 10px; padding: 2px 3px 13px; }
+    .dots { display:flex; gap:6px; } .dots span { width:7px; height:7px; border-radius:100%; background:#50677e; } .dots span:first-child { background:#d67677; } .dots span:nth-child(2) { background:#ddbf73; } .dots span:nth-child(3) { background:#63bfa2; }
+    .app { display:grid; grid-template-columns: 107px 1fr; background:#0b1320; overflow:hidden; border:1px solid #263448; border-radius:9px; min-height:320px; }
+    .sidebar { background:#101c2c; border-right:1px solid #263448; padding:17px 10px; }
+    .sidebar .sm-brand { font-size: 11px; font-weight:800; letter-spacing:-.02em; padding: 0 6px 18px; }
+    .sidebar .item { padding:8px 7px; font-size:9px; color:#8295aa; margin-bottom:7px; border-radius:5px; white-space:nowrap; }
+    .sidebar .item.active { color:#93e8d2; background:#173a42; }
+    .dash { padding:21px 20px; min-width:0; }
+    .dash-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+    .dash h3 { font-size:15px; margin:0; line-height:1.4; letter-spacing:-.03em; }
+    .dash .sub { font-size: 9px; color:#8296ae; }
+    .dash .pill { border-radius:6px; background:#1d3e44; color:#8ce9ce; padding:5px 7px; font-size:9px; font-weight:700; white-space:nowrap; }
+    .metrics { display:grid; grid-template-columns:repeat(3, 1fr); gap:9px; margin:19px 0; }
+    .metric { border:1px solid #2a394c; background:#121f30; border-radius:7px; padding:11px 9px; min-width:0; }
+    .metric label { display:block; color:#96aabd; font-size:8px; margin-bottom:7px; }
+    .metric strong { font-size:22px; line-height:1; }
+    .metric small { display:block; margin-top:7px; font-size:8px; color:#75cdb3; }
+    .table-head { font-size:10px; font-weight:700; margin:4px 0 9px; }
+    .request { display:grid; grid-template-columns: 1fr 1fr auto; align-items:center; gap:8px; background:#121e2e; border:1px solid #27374a; padding:10px 9px; border-radius:6px; margin-bottom:6px; }
+    .request span { font-size:9px; color:#dce6f0; } .request .date { color:#90a4bb; } .request .status { background:#443d29; color:#efd89b; border-radius:3px; font-size:8px; padding:4px 5px; } .request .status.ok { background:#1c403a; color:#9ce6d1; }
+    .preview-tag { position:absolute; bottom:-15px; right:16px; border-radius:30px; font-size:11px; letter-spacing:.01em; padding:7px 11px; border:1px solid #385266; background:#142335; color:#c6d9e9; }
+    .section { padding:83px 0; border-top:1px solid rgba(157,185,222,.09); }
+    .section-head { max-width:680px; margin-bottom:35px; }
+    .kicker { font-size:12px; text-transform:uppercase; letter-spacing:.15em; color:#80dfc6; font-weight:800; }
+    h2 { font-size: clamp(30px, 3.4vw, 42px); margin:9px 0 11px; line-height:1.16; letter-spacing:-.05em; }
+    .section-head p { margin:0; color:#a8b9cc; }
+    .cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; }
+    .card { background:linear-gradient(155deg,#132438,#0c1828); border:1px solid #283c53; padding:28px; border-radius:15px; min-height:225px; }
+    .card .symbol { display:inline-grid; place-items:center; width:43px; height:43px; border:1px solid #3b5369; background:#1d3747; border-radius:12px; font-size:19px; margin-bottom:22px; color:#9ee6d4; }
+    .card h3 { margin:0 0 9px; font-size:18px; letter-spacing:-.028em; }
+    .card p { margin:0; color:#a0b2c8; font-size:14px; line-height:1.72; }
+    .approach { display:grid; grid-template-columns: 1.15fr 1fr; gap:48px; align-items:center; }
+    .approach ul { list-style:none; padding:0; margin:25px 0 0; display:grid; gap:15px; color:#b4c5d6; }
+    .approach li { display:flex; gap:12px; font-size:15px; align-items:flex-start; }
+    .check { color:#8ce6cc; font-weight:800; }
+    .code { border:1px solid #33475c; background:#0e1a2b; border-radius:13px; padding:25px 24px; overflow:auto; box-shadow: 0 24px 60px rgba(0,0,0,.14); }
+    .code .code-top { color:#8fa8bf; font-size:11px; padding-bottom:16px; border-bottom:1px solid #273b4e; margin-bottom:21px; }
+    .code pre { color:#c1d3e4; font-family: "SFMono-Regular",Consolas,monospace; font-size:12px; line-height:2; margin:0; }
+    .c-accent { color:#7ee9ca; } .c-blue { color:#9ebfff; }
+    .roadmap { display:grid; grid-template-columns:repeat(3,1fr); gap:17px; }
+    .step { padding:24px 24px 26px; border-top:2px solid #4f8f98; background:#101d2e; border-radius:0 0 11px 11px; }
+    .step small { color:#80dfc6; font-size:11px; font-weight:800; letter-spacing:.05em; }
+    .step h3 { font-size:16px; margin:12px 0 7px; } .step p { margin:0; color:#9cadc3; font-size:13px; }
+    .cta { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:25px; border:1px solid #365363; background:radial-gradient(ellipse at 90% 0%,#1b3d54,#102334 70%); border-radius:17px; padding:39px 43px; margin-top:60px; }
+    .cta h2 { font-size:29px; margin:0 0 6px; } .cta p { margin:0; color:#adbdcf; font-size:14px; }
+    .footer { padding:27px 0 40px; display:flex; justify-content:space-between; gap:20px; color:#8297af; font-size:12px; border-top:1px solid rgba(157,185,222,.09); }
+    .footer a { color:#b4cde0; }
+    @media (max-width:950px) { .hero {grid-template-columns:1fr; padding-top:70px; gap:58px;} .hero p {max-width:650px} .screen {max-width:650px; width:100%; margin:auto;} .approach {grid-template-columns:1fr; gap:28px;} }
+    @media (max-width:650px) { .wrap {padding:0 18px;} .nav {height:70px;} .nav-right {gap:11px;} .nav-right .hide-sm {display:none;} .nav-cta {font-size:12px; padding:8px 10px;} .brand {font-size:17px;} .hero {padding-top:55px; padding-bottom:76px; gap:42px;} h1 {font-size:44px;} .hero p {font-size:15px;} .cards,.roadmap {grid-template-columns:1fr;} .card {min-height:0;} .section {padding:62px 0;} .screen {padding:9px; transform:none;} .app {grid-template-columns:69px 1fr; min-height:280px;} .sidebar {padding:12px 5px;} .sidebar .sm-brand {font-size:7px; padding:0 3px 14px;} .sidebar .item {font-size:7px; padding:7px 3px;} .dash {padding:14px 10px;} .metric {padding:8px 5px;} .metric strong {font-size:17px;} .metric label,.metric small,.request .date {font-size:7px;} .request {grid-template-columns:1fr auto;} .request .date {display:none;} .preview-tag {font-size:9px;} .cta {padding:27px 22px; margin-top:38px;} .footer {flex-direction:column;} }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .btn { transition:none; } }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="#top" aria-label="VacationManager home"><span class="brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-13 5 2 2 5-5"/></svg></span>VacationManager</a>
+      <div class="nav-right"><a class="hide-sm" href="#features">Features</a><a class="hide-sm" href="#technology">Technology</a><a href="https://github.com/OtpuskaBG/VacationManager" class="nav-cta" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a></div>
+    </nav>
+  </header>
+  <main id="top">
+    <section class="hero wrap">
+      <div>
+        <span class="eyebrow">Early-stage software project</span>
+        <h1>Clearer leave.<br><span class="accent">Calmer teams.</span></h1>
+        <p>VacationManager explores a simpler way to organize employee leave, teams, and projects — with role-based workflows in one practical web application.</p>
+        <div class="btns"><a class="btn btn-primary" href="#features">Explore the project <span aria-hidden="true">↗</span></a><a class="btn btn-secondary" href="https://github.com/OtpuskaBG/VacationManager" target="_blank" rel="noopener noreferrer">Source code ↗</a></div>
+        <div class="footnote">An open-source prototype. Not a production service or a live demo.</div>
+      </div>
+      <div class="screen" role="img" aria-label="Illustrative VacationManager dashboard concept showing sample leave requests and team metrics">
+        <div class="window-top"><div class="dots"><span></span><span></span><span></span></div><span>vacationmanager / concept preview</span><span>◈</span></div>
+        <div class="app">
+          <div class="sidebar"><div class="sm-brand">◈ Workspace</div><div class="item active">▤ Dashboard</div><div class="item">▦ My leave</div><div class="item">♙ Teams</div><div class="item">▥ Projects</div></div>
+          <div class="dash">
+            <div class="dash-head"><div><h3>Overview</h3><div class="sub">Your workspace at a glance</div></div><div class="pill">● Workspace</div></div>
+            <div class="metrics"><div class="metric"><label>Requests</label><strong>12</strong><small>Sample data</small></div><div class="metric"><label>Approved</label><strong>8</strong><small>Sample data</small></div><div class="metric"><label>Teams</label><strong>3</strong><small>Sample data</small></div></div>
+            <div class="table-head">Recent leave requests</div>
+            <div class="request"><span>Team member A</span><span class="date">Oct 19–21</span><span class="status">Pending</span></div>
+            <div class="request"><span>Team member B</span><span class="date">Oct 24–25</span><span class="status ok">Approved</span></div>
+            <div class="request"><span>Team member C</span><span class="date">Nov 2–5</span><span class="status">Pending</span></div>
+          </div>
+        </div>
+        <div class="preview-tag">Illustrative concept · sample data</div>
+      </div>
+    </section>
+    <section class="section" id="features"><div class="wrap">
+      <div class="section-head"><span class="kicker">The project</span><h2>Practical workflows, all in one place.</h2><p>The current codebase brings together the building blocks for structured people and project administration.</p></div>
+      <div class="cards">
+        <article class="card"><div class="symbol" aria-hidden="true">▦</div><h3>Leave requests</h3><p>Employees submit time-off requests, with a manager-oriented approval workflow.</p></article>
+        <article class="card"><div class="symbol" aria-hidden="true">♙</div><h3>Team management</h3><p>Create and manage teams with developers, team leads, and assigned projects.</p></article>
+        <article class="card"><div class="symbol" aria-hidden="true">▤</div><h3>Role-based access</h3><p>Separate actions and visibility for organization roles with authentication and authorization.</p></article>
+      </div>
+    </div></section>
+    <section class="section" id="technology"><div class="wrap approach">
+      <div><span class="kicker">Under the hood</span><h2>Built on a familiar .NET foundation.</h2><p style="color:#a8b9cc">A C# application with a server-rendered Blazor interface, ASP.NET Core services and a data access layer.</p>
+        <ul><li><span class="check">✓</span><span>C# and ASP.NET Core application architecture</span></li><li><span class="check">✓</span><span>Blazor Server user interface</span></li><li><span class="check">✓</span><span>Repository and service patterns for project and team logic</span></li><li><span class="check">✓</span><span>Source available for technical review on GitHub</span></li></ul>
+      </div>
+      <div class="code"><div class="code-top">PROJECT STRUCTURE · representative overview</div><pre><span class="c-accent">VacationManager/</span>
+  ├─ <span class="c-blue">VacationManager.Core/</span>
+  ├─ <span class="c-blue">VacationManager.Data/</span>
+  ├─ <span class="c-blue">VacationManager.Test/</span>
+  ├─ <span class="c-blue">VacationManager/</span>
+  └─ VacationManager.sln
+
+<span class="c-accent"># Stack</span>
+C# · ASP.NET Core · Blazor
+Role-based authentication
+Service / repository architecture</pre></div>
+    </div></section>
+    <section class="section" id="direction"><div class="wrap">
+      <div class="section-head"><span class="kicker">Possible next steps</span><h2>From prototype toward a useful product.</h2><p>These are areas for future development, not claims about features already shipping.</p></div>
+      <div class="roadmap"><div class="step"><small>01 · REFINE</small><h3>Streamline everyday flows</h3><p>Improve the experience around requests, approvals, and team visibility.</p></div><div class="step"><small>02 · VALIDATE</small><h3>Talk with potential users</h3><p>Learn what smaller teams really need from time-off and project coordination.</p></div><div class="step"><small>03 · EXPLORE</small><h3>Experiment with AI</h3><p>Prototype helpful summaries, developer tooling, and smarter scheduling assistance.</p></div></div>
+      <div class="cta"><div><h2>Explore the code.</h2><p>See the current implementation, architecture, and commit history.</p></div><a class="btn btn-primary" href="https://github.com/OtpuskaBG/VacationManager" target="_blank" rel="noopener noreferrer">Open repository ↗</a></div>
+    </div></section>
+  </main>
+  <footer class="wrap footer"><span>© <span id="year">2026</span> VacationManager project contributors · Early-stage open-source prototype</span><span><a href="https://github.com/OtpuskaBG/VacationManager" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span></footer>
+  <script>document.getElementById('year').textContent=new Date().getFullYear();</script>
+</body>
+</html>
